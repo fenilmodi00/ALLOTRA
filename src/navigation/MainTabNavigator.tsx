@@ -1,75 +1,43 @@
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import DashboardScreen from '../screens/Dashboard/DashboardScreen';
 import PanManagementScreen from '../screens/PanManagement/PanManagementScreen';
 import ResultsScreen from '../screens/Results/ResultsScreen';
 import SettingsScreen from '../screens/Settings/SettingsScreen';
-import { useAppTheme } from '../theme';
+import { CustomTabBar } from '../components/navigation/CustomTabBar';
 
 export type MainTabParamList = {
-  Dashboard: undefined;
-  PanManagement: undefined;
-  Results: undefined;
-  Settings: undefined;
+  Home: undefined;
+  Likes: undefined;
+  Search: undefined;
+  Profile: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export function MainTabNavigator() {
-  const theme = useAppTheme();
-
   return (
     <Tab.Navigator
+      tabBar={(props: BottomTabBarProps) => <CustomTabBar {...props} />}
       screenOptions={{
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
         headerShown: false,
-        tabBarStyle: {
-          paddingBottom: 5,
-          paddingTop: 5,
-        },
       }}
     >
+      <Tab.Screen name="Home" component={DashboardScreen} />
       <Tab.Screen
-        name="Dashboard"
-        component={DashboardScreen}
-        options={{
-          tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="home" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="PanManagement"
-        component={PanManagementScreen}
-        options={{
-          tabBarLabel: 'PAN Cards',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="credit-card" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Results"
+        name="Likes"
         component={ResultsScreen}
-        options={{
-          tabBarLabel: 'Results',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="poll" color={color} size={size} />
-          ),
-        }}
+        options={{ title: 'Results' }}
       />
       <Tab.Screen
-        name="Settings"
+        name="Search"
+        component={PanManagementScreen}
+        options={{ title: 'PAN Management' }}
+      />
+      <Tab.Screen
+        name="Profile"
         component={SettingsScreen}
-        options={{
-          tabBarLabel: 'Settings',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="cog" color={color} size={size} />
-          ),
-        }}
+        options={{ title: 'Settings' }}
       />
     </Tab.Navigator>
   );
