@@ -3,8 +3,9 @@ import { Image, Pressable, ScrollView, View } from 'react-native'
 import { Icon } from '@/components/ui/icon'
 import { Text } from '@/components/ui/text'
 import { ArrowLeft, CheckCircle, Clock, Image as ImageIcon } from 'lucide-react-native'
+import { GMPWeekInteractiveChart } from '../components/charts'
 import { growwColors } from '../design-system/tokens/colors'
-import { useIPODetails } from '../hooks'
+import { useGMPHistory, useIPODetails } from '../hooks'
 import { formatDate, formatGMP, formatIssueSize, formatPriceRange, formatSubscriptionStatus, getStatusInfo } from '../utils/formatters'
 import type { DisplayIPO } from '../types'
 import type { IPODetailsScreenProps } from '../types/navigation.types'
@@ -19,6 +20,8 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
   const { ipoId, ipoName } = route.params
   const { ipo: fetchedIPO, loading, error } = useIPODetails(ipoId, true)
   const ipo: DisplayIPO | null = fetchedIPO
+  const stockId = fetchedIPO?.stockId || fetchedIPO?.id
+  const { history: gmpHistory, loading: gmpHistoryLoading } = useGMPHistory(stockId)
 
   if (loading) {
     return (
@@ -172,6 +175,15 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
             </View>
           </View>
         )}
+
+        <View style={{ backgroundColor: 'white', padding: 20, marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: growwColors.text, marginBottom: 12 }}>GMP Trend (7D)</Text>
+          <GMPWeekInteractiveChart
+            history={gmpHistory}
+            loading={gmpHistoryLoading}
+            disabledLabel={ipo.gmp?.value === undefined ? 'GMP not active' : 'No GMP history yet'}
+          />
+        </View>
 
         <View style={{ backgroundColor: 'white', padding: 20, marginBottom: 8 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: growwColors.text, marginBottom: 16 }}>IPO Details</Text>

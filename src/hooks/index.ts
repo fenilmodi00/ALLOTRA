@@ -16,3 +16,4 @@ export {
   useStockSearch, 
   useStockDetails 
 } from './useStockData'
+export { useGMPHistory } from './useGMPHistory'
