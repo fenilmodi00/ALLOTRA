@@ -15,6 +15,11 @@ App.tsx
 └── Types (Data Models)
 ```
 
+### Architecture Decisions (ADRs)
+
+- `docs/adr/ADR-001-typed-navigation-contracts.md`
+- `docs/adr/ADR-002-api-resilience-and-redaction.md`
+
 ## 🌐 Backend API Integration
 
 ### Base URL Configuration
