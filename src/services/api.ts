@@ -21,6 +21,40 @@ interface RequestOptions {
   timeout?: number
 }
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+const isRetryableStatusCode = (statusCode: number) => statusCode >= 500 || statusCode === 429
+
+const isRetryableError = (error: APIError) => {
+  if (isRetryableStatusCode(error.statusCode)) {
+    return true
+  }
+
+  return error.code === 'TIMEOUT' || error.code === 'NETWORK_ERROR'
+}
+
+const toAPIError = (error: unknown, method: string, url: string): APIError => {
+  if (error instanceof APIError) {
+    return error
+  }
+
+  if (error instanceof Error) {
+    if (error.name === 'AbortError') {
+      return new APIError('Request timeout', 408, 'TIMEOUT')
+    }
+
+    if (error.message.includes('Network request failed')) {
+      console.error(`❌ Network Error: ${method} ${url}`)
+      console.error('💡 Check if backend is running and accessible')
+      console.error('💡 Current API URL:', API_CONFIG.baseURL)
+    }
+
+    return new APIError(error.message, 500, 'NETWORK_ERROR')
+  }
+
+  return new APIError('Unknown error occurred', 500, 'UNKNOWN')
+}
+
 // Create abort controller with timeout
 const createAbortController = (timeout: number): AbortController => {
   const controller = new AbortController()
@@ -32,65 +66,57 @@ const createAbortController = (timeout: number): AbortController => {
 export const apiClient = {
   async request<T>(endpoint: string, options: RequestOptions = {}): Promise<APIResponse<T>> {
     const { method = 'GET', body, headers = {}, timeout = API_CONFIG.timeout } = options
-    const controller = createAbortController(timeout)
-
-    const config: RequestInit = {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        ...headers,
-      },
-      signal: controller.signal,
-    }
-
-    if (body && method !== 'GET') {
-      config.body = JSON.stringify(body)
-    }
-
     const url = `${API_CONFIG.baseURL}${endpoint}`
     
     if (__DEV__) {
       console.log(`🌐 API Request: ${method} ${url}`)
     }
 
-    try {
-      const response = await fetch(url, config)
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new APIError(
-          data.message || 'Request failed',
-          response.status,
-          data.code
-        )
-      }
-
-      if (__DEV__) {
-        console.log(`✅ API Response: ${method} ${url} - ${response.status}`)
-      }
-
-      return { success: true, data }
-    } catch (error) {
-      if (error instanceof APIError) throw error
-      
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          throw new APIError('Request timeout', 408, 'TIMEOUT')
+    for (let attempt = 0; attempt <= API_CONFIG.retryAttempts; attempt++) {
+      try {
+        const controller = createAbortController(timeout)
+        const config: RequestInit = {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            ...headers,
+          },
+          signal: controller.signal,
         }
-        
-        // Network error - provide helpful debugging info
-        if (error.message.includes('Network request failed')) {
-          console.error(`❌ Network Error: ${method} ${url}`)
-          console.error('💡 Check if backend is running and accessible')
-          console.error('💡 Current API URL:', API_CONFIG.baseURL)
+
+        if (body && method !== 'GET') {
+          config.body = JSON.stringify(body)
         }
-        
-        throw new APIError(error.message, 500, 'NETWORK_ERROR')
+
+        const response = await fetch(url, config)
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new APIError(data.message || 'Request failed', response.status, data.code)
+        }
+
+        if (__DEV__) {
+          console.log(`✅ API Response: ${method} ${url} - ${response.status}`)
+        }
+
+        return { success: true, data }
+      } catch (error) {
+        const normalizedError = toAPIError(error, method, url)
+        const hasAttemptsLeft = attempt < API_CONFIG.retryAttempts
+
+        if (hasAttemptsLeft && isRetryableError(normalizedError)) {
+          const nextDelay = API_CONFIG.retryDelay * Math.pow(API_CONFIG.retryBackoffMultiplier, attempt)
+          const boundedDelay = Math.min(nextDelay, API_CONFIG.maxRetryDelay)
+          await delay(boundedDelay)
+          continue
+        }
+
+        throw normalizedError
       }
-      
-      throw new APIError('Unknown error occurred', 500, 'UNKNOWN')
     }
+
+    throw new APIError('Retry attempts exhausted', 500, 'RETRY_EXHAUSTED')
   },
 
   get<T>(endpoint: string, options?: Omit<RequestOptions, 'method' | 'body'>) {

@@ -26,6 +26,8 @@ export const API_CONFIG = {
   timeout: parseInt(process.env.EXPO_PUBLIC_API_TIMEOUT || '10000', 10),
   retryAttempts: 3,
   retryDelay: 1000,
+  retryBackoffMultiplier: 2,
+  maxRetryDelay: 8000,
 }
 
 // Development helpers
