@@ -1,6 +1,7 @@
 import { apiClient } from './api'
 import type { IPO, IPOWithGMP, AllotmentResult, MarketIndex, PaginatedResponse, DisplayIPO } from '../types'
 import { transformIPOData, transformIPOList } from '../utils/dataTransformers'
+import { mapAllotmentStatus } from './mappers/allotmentMapper'
 
 // IPO Service - All IPO-related API calls
 export const ipoService = {
@@ -87,7 +88,7 @@ export const ipoService = {
     // Transform backend response to frontend format
     const data = response.data.data
     return {
-      status: data.status as any,
+      status: mapAllotmentStatus(data.status),
       ipoId: data.ipo_id,
       ipoName: '', // You might need to fetch this separately
       pan: data.pan_hash, // Note: backend returns hashed PAN
