@@ -26,6 +26,8 @@ Guidance for coding agents working in this repository.
 - `npm run android` - start app in Android flow.
 - `npm run ios` - start app in iOS flow.
 - `npm run web` - start app in web flow.
+- `npm run test:unit` - run unit tests (Vitest).
+- `npm run test:unit:watch` - run unit tests in watch mode.
 
 ### Missing scripts to be aware of
 
@@ -36,17 +38,14 @@ Guidance for coding agents working in this repository.
 ### Type checking
 
 - Canonical command: `npx tsc --noEmit`.
-- Current status: this command fails with a tsconfig/moduleResolution mismatch inherited from Expo base config.
-- If you need to validate types, first fix tsconfig compatibility; do not claim typecheck is passing unless re-run successfully.
+- Current status: this command runs successfully in the repository after the architecture hardening updates.
+- Always re-run typecheck before claiming success.
 
 ### Single-test execution guidance
 
-- A test runner is not configured yet (no Jest/Vitest config and no test script).
-- Therefore, there is no repo-supported command to run one test file today.
-- If tests are added in the future, prefer script-backed commands, for example:
-  - `npm test -- path/to/file.test.ts`
-  - `npm test -- -t "test name"`
-- Do not introduce a new testing framework unless explicitly requested.
+- Use Vitest via `npm run test:unit`.
+- Run one file with: `npm run test:unit -- tests/path/to/file.test.ts`.
+- Do not introduce an additional testing framework unless explicitly requested.
 
 ### Debug and manual verification paths
 

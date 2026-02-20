@@ -3,6 +3,18 @@
 ## Overview
 This is a React Native/Expo IPO tracking application that provides real-time IPO data, market indices, stock information, and allotment checking functionality. The app follows a clean architecture with service layers, custom hooks, and centralized state management.
 
+## ✅ Verification Commands
+
+- `npm run test:unit`
+- `npx tsc --noEmit`
+- `npm start`
+
+### Contract and Safety Rules
+
+- Navigation contracts are typed in `src/types/navigation.types.ts` and enforced in stack/tab usage.
+- API retries use bounded backoff from `src/config/environment.ts` and are implemented in `src/services/api.ts`.
+- Sensitive values (including PAN-like patterns) are redacted in development logs via `src/utils/logger.ts`.
+
 ## 🏗️ Architecture Overview
 
 ```
