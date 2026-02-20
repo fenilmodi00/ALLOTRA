@@ -1,0 +1,1 @@
+export { GMPWeekInteractiveChart } from './GMPWeekInteractiveChart'
