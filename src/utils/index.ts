@@ -2,10 +2,10 @@
 export * from './dataTransformers'
 export { 
   formatCurrency, 
+  formatIndianNumber,
   formatPercentage, 
   formatDate, 
-  formatDateRange,
-  formatNumber,
+  formatIPODateRange,
   formatPriceRange as formatPriceRangeDisplay
 } from './formatters'
 export * from './validators'
