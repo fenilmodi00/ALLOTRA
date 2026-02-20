@@ -11,8 +11,9 @@ import {
   PopularIPOsSection 
 } from '../components/home'
 import type { DisplayIPO } from '../types'
+import type { HomeTabScreenProps } from '../types/navigation.types'
 
-export default function HomeScreen({ navigation }: any) {
+export default function HomeScreen({ navigation }: HomeTabScreenProps) {
     const [activeFilter, setActiveFilter] = useState('ongoing')
     const [showMoreIPOs, setShowMoreIPOs] = useState<{[key: string]: boolean}>({})
     const [showMorePopular, setShowMorePopular] = useState(false)
@@ -35,7 +36,7 @@ export default function HomeScreen({ navigation }: any) {
 
     // Navigation handlers
     const handleSearchPress = useCallback(() => {
-        navigation.navigate('Search')
+        navigation.navigate('Pay')
     }, [navigation])
 
     const handleProfilePress = useCallback(() => {
@@ -44,7 +45,7 @@ export default function HomeScreen({ navigation }: any) {
 
     const handleIPOPress = useCallback((ipo: DisplayIPO) => {
         console.log('📋 IPO Card Navigation:', ipo.name, ipo.id)
-        navigation.navigate('IPODetails', { ipo })
+        navigation.navigate('IPODetails', { ipoId: ipo.id, ipoName: ipo.name })
     }, [navigation])
 
     const handleCheckStatus = useCallback((ipo: DisplayIPO) => {

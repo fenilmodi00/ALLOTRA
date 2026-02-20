@@ -11,9 +11,10 @@ import InvestmentsScreen from '../../screens/InvestmentsScreen'
 import SearchScreen from '../../screens/SearchScreen'
 import IPODetailsScreen from '../../screens/IPODetailsScreen'
 import { BottomNavigation } from './BottomNavigation'
+import type { RootStackParamList, TabParamList } from '../../types/navigation.types'
 
-const Tab = createBottomTabNavigator()
-const Stack = createNativeStackNavigator()
+const Tab = createBottomTabNavigator<TabParamList>()
+const Stack = createNativeStackNavigator<RootStackParamList>()
 
 // Home Stack (Home -> Details -> Check)
 const HomeStack = () => {

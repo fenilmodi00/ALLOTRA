@@ -6,9 +6,10 @@ import { VStack } from '@/components/ui/vstack'
 import { growwColors } from '../design-system/tokens/colors'
 import { PANInput, CheckButton, ResultCard } from '../components/common'
 import { useAllotmentCheck } from '../hooks'
+import type { CheckScreenProps } from '../types/navigation.types'
 
-export default function CheckScreen({ route, navigation }: any) {
-    const { ipoName, ipoId } = route.params || { ipoName: 'Select IPO', ipoId: null }
+export default function CheckScreen({ route }: CheckScreenProps) {
+    const { ipoName, ipoId } = route.params
     const [pan, setPan] = useState('')
     const [error, setError] = useState('')
 

@@ -7,6 +7,7 @@ import { growwColors } from '../design-system/tokens/colors'
 import { useIPODetails } from '../hooks'
 import { formatDate, formatGMP, formatIssueSize, formatPriceRange, formatSubscriptionStatus, getStatusInfo } from '../utils/formatters'
 import type { DisplayIPO } from '../types'
+import type { IPODetailsScreenProps } from '../types/navigation.types'
 
 const rowStyle = {
   flexDirection: 'row' as const,
@@ -14,10 +15,10 @@ const rowStyle = {
   alignItems: 'center' as const,
 }
 
-export default function IPODetailsScreen({ navigation, route }: any) {
-  const { ipo: routeIPO, ipoId } = route.params || {}
-  const { ipo: fetchedIPO, loading, error } = useIPODetails(ipoId && !routeIPO ? ipoId : null, true)
-  const ipo: DisplayIPO | null = routeIPO || fetchedIPO
+export default function IPODetailsScreen({ navigation, route }: IPODetailsScreenProps) {
+  const { ipoId, ipoName } = route.params
+  const { ipo: fetchedIPO, loading, error } = useIPODetails(ipoId, true)
+  const ipo: DisplayIPO | null = fetchedIPO
 
   if (loading) {
     return (
@@ -32,6 +33,7 @@ export default function IPODetailsScreen({ navigation, route }: any) {
       <View style={{ flex: 1, backgroundColor: growwColors.background, padding: 20, justifyContent: 'center', alignItems: 'center' }}>
         <Text style={{ color: growwColors.error, textAlign: 'center' }}>
           {error || 'IPO not found'}
+          {!error ? ` (${ipoName})` : ''}
         </Text>
         <Pressable
           onPress={() => navigation.goBack()}
