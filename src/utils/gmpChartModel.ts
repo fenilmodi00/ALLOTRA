@@ -112,11 +112,11 @@ export const getTrendSummary = (history: GMPHistoryPoint[]) => {
   const first = history[0].gmpValue
   const latest = history[history.length - 1].gmpValue
   const change = latest - first
-  const denominator = first === 0 ? 1 : Math.abs(first)
+  const changePercent = first === 0 ? 0 : (change / Math.abs(first)) * 100
 
   return {
     latest,
     change,
-    changePercent: (change / denominator) * 100,
+    changePercent,
   }
 }

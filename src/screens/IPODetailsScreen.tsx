@@ -20,7 +20,7 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
   const { ipoId, ipoName } = route.params
   const { ipo: fetchedIPO, loading, error } = useIPODetails(ipoId, true)
   const ipo: DisplayIPO | null = fetchedIPO
-  const stockId = fetchedIPO?.stockId || fetchedIPO?.id
+  const stockId = fetchedIPO?.stockId
   const { history: gmpHistory, loading: gmpHistoryLoading } = useGMPHistory(stockId)
 
   if (loading) {
@@ -54,6 +54,11 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
   const closeDate = ipo.dates.close ? new Date(ipo.dates.close) : null
   const resultDate = ipo.dates.allotment ? new Date(ipo.dates.allotment) : null
   const listingDate = ipo.dates.listing ? new Date(ipo.dates.listing) : null
+  const chartDisabledLabel = ipo.gmp?.value === undefined
+    ? 'GMP not active'
+    : !ipo.stockId
+      ? 'GMP history unavailable'
+      : 'No GMP history yet'
 
   const timelineStatus = (eventDate: Date | null) => {
     if (!eventDate) return 'pending'
@@ -181,7 +186,7 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
           <GMPWeekInteractiveChart
             history={gmpHistory}
             loading={gmpHistoryLoading}
-            disabledLabel={ipo.gmp?.value === undefined ? 'GMP not active' : 'No GMP history yet'}
+            disabledLabel={chartDisabledLabel}
           />
         </View>
 

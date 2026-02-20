@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import type { GestureResponderEvent } from 'react-native'
 import { StyleSheet, View } from 'react-native'
 import Svg, { Circle, Line, Path, Rect, Text as SvgText } from 'react-native-svg'
@@ -35,6 +35,21 @@ export function GMPWeekInteractiveChart({
   const trendColor = summary.latest >= 0 ? growwColors.success : growwColors.error
   const activePoint = activeIndex === null ? null : model.points[activeIndex] || null
 
+  useEffect(() => {
+    if (!history.length) {
+      setActiveIndex(null)
+      return
+    }
+
+    setActiveIndex((current) => {
+      if (current === null || current >= history.length) {
+        return history.length - 1
+      }
+
+      return current
+    })
+  }, [history])
+
   const updateByTouch = useCallback(
     (event: GestureResponderEvent) => {
       if (!model.points.length) {
@@ -69,10 +84,8 @@ export function GMPWeekInteractiveChart({
       <View
         style={styles.touchLayer}
         onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
-        onStartShouldSetResponder={() => true}
-        onMoveShouldSetResponder={() => true}
-        onResponderGrant={updateByTouch}
-        onResponderMove={updateByTouch}
+        onTouchStart={updateByTouch}
+        onTouchMove={updateByTouch}
       >
         <Svg width={width} height={CHART_HEIGHT}>
           {!loading && history.length > 0 && (

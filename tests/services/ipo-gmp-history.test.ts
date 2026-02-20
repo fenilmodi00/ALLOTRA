@@ -56,4 +56,23 @@ describe('ipoService.getGMPHistory', () => {
 
     await expect(ipoService.getGMPHistory('2584')).resolves.toEqual([])
   })
+
+  it('drops rows with invalid dates', async () => {
+    getMock.mockResolvedValue({
+      data: {
+        success: true,
+        data: {
+          stock_id: '2584',
+          history: [
+            { date: 'bad-date', gmp_value: 8 },
+            { date: '2026-02-20', gmp_value: 7 },
+          ],
+        },
+      },
+    })
+
+    await expect(ipoService.getGMPHistory('2584')).resolves.toEqual([
+      { date: '2026-02-20', gmpValue: 7 },
+    ])
+  })
 })

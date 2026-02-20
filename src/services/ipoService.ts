@@ -18,10 +18,12 @@ const normalizeGMPHistory = (rows: GMPHistoryRawPoint[]): GMPHistoryPoint[] => {
     .map((row) => ({
       date: row.date,
       gmpValue: Number(row.gmp_value ?? row.gmp ?? Number.NaN),
+      timestamp: Date.parse(row.date),
     }))
-    .filter((row) => row.date && Number.isFinite(row.gmpValue))
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .filter((row) => row.date && Number.isFinite(row.gmpValue) && Number.isFinite(row.timestamp))
+    .sort((a, b) => a.timestamp - b.timestamp)
     .slice(-7)
+    .map(({ date, gmpValue }) => ({ date, gmpValue }))
 }
 
 // IPO Service - All IPO-related API calls

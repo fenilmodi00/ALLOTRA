@@ -45,4 +45,14 @@ describe('gmpChartModel', () => {
     expect(summary.latest).toBe(3)
     expect(summary.change).toBe(2)
   })
+
+  it('returns zero percent change when baseline is zero', () => {
+    const summary = getTrendSummary([
+      { date: '2026-02-20', gmpValue: 0 },
+      { date: '2026-02-21', gmpValue: 5 },
+    ])
+
+    expect(summary.change).toBe(5)
+    expect(summary.changePercent).toBe(0)
+  })
 })
