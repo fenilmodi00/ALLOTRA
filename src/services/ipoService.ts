@@ -1,7 +1,28 @@
 import { apiClient } from './api'
-import type { IPO, IPOWithGMP, AllotmentResult, MarketIndex, PaginatedResponse, DisplayIPO } from '../types'
+import type {
+  IPO,
+  IPOWithGMP,
+  AllotmentResult,
+  MarketIndex,
+  PaginatedResponse,
+  DisplayIPO,
+  GMPHistoryPoint,
+  GMPHistoryRawPoint,
+  GMPHistoryResponse,
+} from '../types'
 import { transformIPOData, transformIPOList } from '../utils/dataTransformers'
 import { mapAllotmentStatus } from './mappers/allotmentMapper'
+
+const normalizeGMPHistory = (rows: GMPHistoryRawPoint[]): GMPHistoryPoint[] => {
+  return rows
+    .map((row) => ({
+      date: row.date,
+      gmpValue: Number(row.gmp_value ?? row.gmp ?? Number.NaN),
+    }))
+    .filter((row) => row.date && Number.isFinite(row.gmpValue))
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(-7)
+}
 
 // IPO Service - All IPO-related API calls
 export const ipoService = {
@@ -125,6 +146,18 @@ export const ipoService = {
     }
   },
 
+  // Get GMP history for charting
+  async getGMPHistory(stockId: string): Promise<GMPHistoryPoint[]> {
+    const response = await apiClient.get<{ data: GMPHistoryResponse | GMPHistoryRawPoint[]; success: boolean }>(
+      `/gmp/history/${stockId}`
+    )
+
+    const payload = response.data.data
+    const rows = Array.isArray(payload) ? payload : payload?.history || []
+
+    return normalizeGMPHistory(rows)
+  },
+
   // Get performance metrics (for debugging/monitoring)
   async getPerformanceMetrics() {
     return apiClient.get('/performance/metrics')
@@ -149,5 +182,6 @@ export const {
   getListedIPOs,
   checkAllotment, 
   getMarketIndices,
-  getIPOGMP
+  getIPOGMP,
+  getGMPHistory,
 } = ipoService
