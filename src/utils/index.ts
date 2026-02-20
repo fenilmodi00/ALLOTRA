@@ -9,3 +9,4 @@ export {
   formatPriceRange as formatPriceRangeDisplay
 } from './formatters'
 export * from './validators'
+export * from './gmpChartModel'
