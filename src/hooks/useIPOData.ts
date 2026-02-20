@@ -3,6 +3,7 @@ import { useIPOStore } from '../store/useIPOStore'
 import { ipoService } from '../services/ipoService'
 import type { DisplayIPO, AllotmentResult, IPOStatus } from '../types'
 import { devError, devLog } from '../utils/logger'
+import { ipoRepository } from '../repositories/ipoRepository'
 
 // Hook for fetching and managing IPO list with enhanced features
 export const useIPOList = (status: IPOStatus | 'all' = 'all', includeGMP = true) => {
@@ -22,11 +23,11 @@ export const useIPOList = (status: IPOStatus | 'all' = 'all', includeGMP = true)
 
       // Use the most appropriate endpoint
       if (status === 'all' && includeGMP) {
-        data = await ipoService.getActiveIPOsWithGMP()
+        data = await ipoRepository.getActiveFeed()
         devLog('📊 Fetched active IPOs with GMP:', { count: data.length })
       } else if (status === 'LIVE') {
         data = includeGMP 
-          ? await ipoService.getActiveIPOsWithGMP()
+          ? await ipoRepository.getActiveFeed()
           : await ipoService.getActiveIPOs()
         devLog('📊 Fetched live IPOs:', { count: data.length })
       } else if (status === 'UPCOMING') {
@@ -96,9 +97,7 @@ export const useIPODetails = (ipoId: string, includeGMP = true) => {
     setError(null)
     
     try {
-      const data = includeGMP 
-        ? await ipoService.getIPOByIdWithGMP(ipoId)
-        : await ipoService.getIPOById(ipoId)
+      const data = await ipoRepository.getById(ipoId, includeGMP)
       
       setIPO(data)
     } catch (err) {
