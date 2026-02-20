@@ -12,9 +12,10 @@ import {
 } from '../components/home'
 import type { DisplayIPO } from '../types'
 import type { HomeTabScreenProps } from '../types/navigation.types'
+import { useIPOUIStore } from '../store'
 
 export default function HomeScreen({ navigation }: HomeTabScreenProps) {
-    const [activeFilter, setActiveFilter] = useState('ongoing')
+    const { activeFilter, setActiveFilter } = useIPOUIStore()
     const [showMoreIPOs, setShowMoreIPOs] = useState<{[key: string]: boolean}>({})
     const [showMorePopular, setShowMorePopular] = useState(false)
 
