@@ -51,6 +51,7 @@ export interface IPOWithGMP extends IPO {
 // Frontend-friendly IPO model (transformed from backend)
 export interface DisplayIPO {
   id: string
+  stockId?: string
   name: string
   companyName: string
   companyCode: string
@@ -88,6 +89,22 @@ export interface DisplayIPO {
     listingGain?: string
     dataSource?: string
   }
+}
+
+export interface GMPHistoryRawPoint {
+  date: string
+  gmp_value?: number
+  gmp?: number
+}
+
+export interface GMPHistoryPoint {
+  date: string
+  gmpValue: number
+}
+
+export interface GMPHistoryResponse {
+  stock_id?: string
+  history?: GMPHistoryRawPoint[]
 }
 
 // Stock/Index Data Model

@@ -14,6 +14,7 @@ export const transformIPOData = (ipo: IPO | IPOWithGMP): DisplayIPO => {
   
   const transformed: DisplayIPO = {
     id: ipo.id || '',
+    stockId: ipo.stock_id || undefined,
     name: ipo.name || 'Unknown IPO',
     companyName: ipo.name || 'Unknown Company',
     companyCode: ipo.company_code || '',
