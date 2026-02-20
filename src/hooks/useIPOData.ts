@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useIPOStore } from '../store/useIPOStore'
 import { ipoService } from '../services/ipoService'
 import type { DisplayIPO, AllotmentResult, IPOStatus } from '../types'
+import { devError, devLog } from '../utils/logger'
 
 // Hook for fetching and managing IPO list with enhanced features
 export const useIPOList = (status: IPOStatus | 'all' = 'all', includeGMP = true) => {
@@ -22,30 +23,30 @@ export const useIPOList = (status: IPOStatus | 'all' = 'all', includeGMP = true)
       // Use the most appropriate endpoint
       if (status === 'all' && includeGMP) {
         data = await ipoService.getActiveIPOsWithGMP()
-        if (__DEV__) console.log('📊 Fetched active IPOs with GMP:', data.length, 'items')
+        devLog('📊 Fetched active IPOs with GMP:', { count: data.length })
       } else if (status === 'LIVE') {
         data = includeGMP 
           ? await ipoService.getActiveIPOsWithGMP()
           : await ipoService.getActiveIPOs()
-        if (__DEV__) console.log('📊 Fetched live IPOs:', data.length, 'items')
+        devLog('📊 Fetched live IPOs:', { count: data.length })
       } else if (status === 'UPCOMING') {
         data = await ipoService.getUpcomingIPOs()
-        if (__DEV__) console.log('📊 Fetched upcoming IPOs:', data.length, 'items')
+        devLog('📊 Fetched upcoming IPOs:', { count: data.length })
       } else if (status === 'CLOSED') {
         data = await ipoService.getClosedIPOs()
-        if (__DEV__) console.log('📊 Fetched closed IPOs:', data.length, 'items')
+        devLog('📊 Fetched closed IPOs:', { count: data.length })
       } else if (status === 'LISTED') {
         data = await ipoService.getListedIPOs()
-        if (__DEV__) console.log('📊 Fetched listed IPOs:', data.length, 'items')
+        devLog('📊 Fetched listed IPOs:', { count: data.length })
       } else {
         // For any other status or 'all', use the general endpoint
         data = await ipoService.getIPOs({ status: status === 'all' ? undefined : status })
-        if (__DEV__) console.log('📊 Fetched general IPOs:', data.length, 'items')
+        devLog('📊 Fetched general IPOs:', { count: data.length })
       }
 
       // Log sample data for debugging (only in dev)
       if (__DEV__ && data.length > 0) {
-        console.log('📊 Sample IPO data:', {
+        devLog('📊 Sample IPO data:', {
           name: data[0].name,
           status: data[0].status,
           dates: data[0].dates,
@@ -55,12 +56,12 @@ export const useIPOList = (status: IPOStatus | 'all' = 'all', includeGMP = true)
 
       setIPOs(data)
     } catch (err) {
-      console.error('❌ Failed to fetch IPOs:', err)
+      devError('❌ Failed to fetch IPOs:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch IPOs')
       
       // Fallback to mock data in development
       if (__DEV__) {
-        console.log('🔄 Using mock data as fallback...')
+        devLog('🔄 Using mock data as fallback...')
         // Dynamically import mock data to avoid including it in production
         const { getMockIPOData } = await import('../debug/testIPOData')
         const mockData = getMockIPOData()

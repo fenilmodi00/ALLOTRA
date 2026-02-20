@@ -7,6 +7,7 @@ import { growwColors } from '../design-system/tokens/colors'
 import { PANInput, CheckButton, ResultCard } from '../components/common'
 import { useAllotmentCheck } from '../hooks'
 import type { CheckScreenProps } from '../types/navigation.types'
+import { devError } from '../utils/logger'
 
 export default function CheckScreen({ route }: CheckScreenProps) {
     const { ipoName, ipoId } = route.params
@@ -32,7 +33,7 @@ export default function CheckScreen({ route }: CheckScreenProps) {
         try {
             await checkAllotment(ipoId, pan)
         } catch (err) {
-            console.error('Allotment check failed:', err)
+            devError('Allotment check failed:', err)
         }
     }
 

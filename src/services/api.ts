@@ -1,5 +1,6 @@
 import { APIResponse } from '../types'
 import { API_CONFIG } from '../config/environment'
+import { devError, devLog } from '../utils/logger'
 
 // Custom error class for API errors
 export class APIError extends Error {
@@ -44,9 +45,9 @@ const toAPIError = (error: unknown, method: string, url: string): APIError => {
     }
 
     if (error.message.includes('Network request failed')) {
-      console.error(`❌ Network Error: ${method} ${url}`)
-      console.error('💡 Check if backend is running and accessible')
-      console.error('💡 Current API URL:', API_CONFIG.baseURL)
+      devError(`❌ Network Error: ${method} ${url}`)
+      devError('💡 Check if backend is running and accessible')
+      devError('💡 Current API URL:', API_CONFIG.baseURL)
     }
 
     return new APIError(error.message, 500, 'NETWORK_ERROR')
@@ -68,9 +69,7 @@ export const apiClient = {
     const { method = 'GET', body, headers = {}, timeout = API_CONFIG.timeout } = options
     const url = `${API_CONFIG.baseURL}${endpoint}`
     
-    if (__DEV__) {
-      console.log(`🌐 API Request: ${method} ${url}`)
-    }
+    devLog(`🌐 API Request: ${method} ${url}`)
 
     for (let attempt = 0; attempt <= API_CONFIG.retryAttempts; attempt++) {
       try {
@@ -96,9 +95,7 @@ export const apiClient = {
           throw new APIError(data.message || 'Request failed', response.status, data.code)
         }
 
-        if (__DEV__) {
-          console.log(`✅ API Response: ${method} ${url} - ${response.status}`)
-        }
+        devLog(`✅ API Response: ${method} ${url} - ${response.status}`)
 
         return { success: true, data }
       } catch (error) {
