@@ -21,8 +21,11 @@ interface IPOStockCardProps {
   showCheckButton?: boolean
 }
 
-// Company logo component - shows real logo from API or fallback to initials
-const CompanyLogo = ({ ipo, size = 60 }: { ipo: DisplayIPO; size?: number }) => {
+/**
+ * Squircle company logo — Figma node 1:6097: 38×38px, borderRadius:12.
+ * Falls back to colored initials when no logoUrl.
+ */
+const CompanyLogo = ({ ipo, size = 38 }: { ipo: DisplayIPO; size?: number }) => {
   const initials = ipo.name
     .split(' ')
     .map(word => word.charAt(0))
@@ -30,62 +33,49 @@ const CompanyLogo = ({ ipo, size = 60 }: { ipo: DisplayIPO; size?: number }) => 
     .substring(0, 2)
     .toUpperCase()
 
-  // Generate consistent color based on name
-  const colors = ['#4e5acc', '#00b386', '#f35d5d', '#ffb900', '#9c27b0', '#2196f3']
-  const colorIndex = ipo.name.charCodeAt(0) % colors.length
-  const bgColor = colors[colorIndex] + '20' // 20% opacity
-  const textColor = colors[colorIndex]
+  const palette = ['#4e5acc', '#00b386', '#f35d5d', '#ffb900', '#9c27b0', '#2196f3']
+  const bgColor = palette[ipo.name.charCodeAt(0) % palette.length] + '20'
+  const textColor = palette[ipo.name.charCodeAt(0) % palette.length]
 
-  // If we have a logo URL, show the image
   if (ipo.logoUrl) {
     return (
       <Box
         style={{
           width: size,
           height: size,
-          borderRadius: size / 2,
+          borderRadius: 12,
           backgroundColor: '#f8f9fa',
-          justifyContent: 'center',
-          alignItems: 'center',
+          borderWidth: 1,
+          borderColor: '#e8e8e8',
           overflow: 'hidden',
         }}
       >
         <Image
           source={{ uri: ipo.logoUrl }}
-          style={{
-            width: size * 0.8, // Slightly smaller than container
-            height: size * 0.8,
-            borderRadius: (size * 0.8) / 2,
-          }}
+          style={{ width: size, height: size, borderRadius: 12 }}
           resizeMode="contain"
           onError={() => {
-            console.log('❌ Failed to load logo for:', ipo.name)
+            if (__DEV__) console.log('Failed to load logo for:', ipo.name)
           }}
         />
       </Box>
     )
   }
 
-  // Fallback to initials
   return (
     <Box
       style={{
         width: size,
         height: size,
-        borderRadius: size / 2,
+        borderRadius: 12,
         backgroundColor: bgColor,
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#e8e8e8',
       }}
     >
-      <Text
-        style={{
-          fontSize: size > 50 ? 20 : 14,
-          fontWeight: 'bold',
-          color: textColor,
-          fontFamily: 'Inter',
-        }}
-      >
+      <Text style={{ fontSize: 14, fontWeight: '600', color: textColor }}>
         {initials}
       </Text>
     </Box>
@@ -187,39 +177,31 @@ export const IPOStockCard = memo(function IPOStockCard({
     opacity: opacity.value,
   }))
 
-  // Truncate name to fit card
-  const displayName = useMemo(() => {
-    const maxLength = 12
-    if (ipo.name.length > maxLength) {
-      return ipo.name.substring(0, maxLength) + '...'
-    }
-    return ipo.name
-  }, [ipo.name])
-
   const CardContent = (
+    // Figma node 1:6097: 176×160px, borderRadius:10, border:1 #e8e8e8, NO shadow/elevation
     <Box
       style={{
         backgroundColor: growwColors.surface,
-        borderColor: '#d2cdcd',
+        borderColor: '#e8e8e8',
         borderWidth: 1,
-        borderRadius: 13,
-        padding: 12,
-        width: 171,
-        height: showCheckButton ? 195 : 171, // Slightly taller when check button is shown
+        borderRadius: 10,
+        width: 176,
+        height: showCheckButton ? 195 : 160,
+        overflow: 'hidden',
       }}
     >
-      {/* Status Badge - Top Right */}
+      {/* Status Badge — top-right, z-index above logo */}
       <Animated.View style={{
         position: 'absolute',
-        top: 10,
-        right: 10,
+        top: 8,
+        right: 8,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
+        zIndex: 1,
       }}>
         {statusConfig.hasDot && (
           <Box style={{ position: 'relative', width: 10, height: 10, justifyContent: 'center', alignItems: 'center' }}>
-            {/* Glow effect behind the dot */}
             {statusConfig.isBlinking && (
               <Animated.View style={[{
                 position: 'absolute',
@@ -229,7 +211,6 @@ export const IPOStockCard = memo(function IPOStockCard({
                 backgroundColor: statusConfig.dotColor,
               }, glowAnimatedStyle]} />
             )}
-            {/* The dot */}
             <Animated.View style={[{
               width: 6,
               height: 6,
@@ -243,81 +224,65 @@ export const IPOStockCard = memo(function IPOStockCard({
         </Badge>
       </Animated.View>
 
-      {/* Company Logo */}
-      <Box style={{ marginTop: 4 }}>
-        <CompanyLogo ipo={ipo} size={60} />
+      {/* Logo — Figma: left:14 top:13, 38×38, borderRadius:12 */}
+      <Box style={{ position: 'absolute', top: 13, left: 14 }}>
+        <CompanyLogo ipo={ipo} size={38} />
       </Box>
 
-      {/* IPO Info - Bottom Section */}
-      <VStack style={{ marginTop: 'auto', gap: 2 }}>
+      {/* Text block — Figma absolute positions translated to paddingTop layout:
+          name center ~68.5px → top ~58
+          price center ~100px → ~32px gap
+          change center ~124.5px → ~24px gap */}
+      <VStack style={{ position: 'absolute', left: 14, right: 14, top: 58 }}>
+        {/* Roboto Medium 16px — Figma: font-medium text-[16px] text-black */}
         <Text
-          style={{
-            fontSize: 14,
-            fontWeight: '500',
-            color: growwColors.text,
-            fontFamily: 'Inter',
-          }}
+          style={{ fontSize: 16, fontWeight: '500', color: '#000000', lineHeight: 21 }}
           numberOfLines={1}
         >
-          {displayName}
+          {ipo.name}
         </Text>
 
+        {/* Roboto Regular 15px — Figma: font-normal text-[15px] text-black, ~top:100 */}
         <Text
-          style={{
-            fontSize: 15,
-            fontWeight: 'bold',
-            color: growwColors.text,
-            fontFamily: 'Inter',
-          }}
+          style={{ fontSize: 15, fontWeight: '400', color: '#000000', lineHeight: 20, marginTop: 11 }}
         >
           {priceRange}
         </Text>
 
+        {/* Roboto SemiBold 13px — Figma: font-semibold text-[13px], ~top:124.5 */}
         {gmpDisplay ? (
           <Text
             style={{
-              fontSize: 14,
-              fontWeight: '500',
-              color: gmpDisplay.isPositive ? growwColors.success : growwColors.error,
-              fontFamily: 'Inter',
+              fontSize: 13,
+              fontWeight: '600',
+              color: gmpDisplay.isPositive ? '#00b386' : '#f35d5d',
+              lineHeight: 18,
+              marginTop: 5,
             }}
           >
             {gmpDisplay.text}
           </Text>
         ) : (
           <Text
-            style={{
-              fontSize: 14,
-              fontWeight: '500',
-              color: growwColors.textSecondary,
-              fontFamily: 'Inter',
-            }}
+            style={{ fontSize: 13, fontWeight: '600', color: growwColors.textSecondary, lineHeight: 18, marginTop: 5 }}
           >
-            +₹0(+0.0%)
+            GMP N/A
           </Text>
         )}
 
-        {/* Check Status Button for Allotted IPOs */}
         {showCheckButton && onCheckStatus && (
           <Pressable
             style={{
               backgroundColor: growwColors.primary,
-              borderRadius: 6,
+              borderRadius: 20,
               paddingHorizontal: 12,
               paddingVertical: 6,
-              marginTop: 4,
+              marginTop: 8,
               alignItems: 'center',
             }}
             onPress={onCheckStatus}
           >
-            <Text
-              style={{
-                color: growwColors.textInverse,
-                fontSize: 12,
-                fontWeight: 'bold',
-                fontFamily: 'Inter',
-              }}
-            >
+            <Text style={{ color: growwColors.textInverse, fontSize: 12, fontWeight: '500' }}>
               Check
             </Text>
           </Pressable>
