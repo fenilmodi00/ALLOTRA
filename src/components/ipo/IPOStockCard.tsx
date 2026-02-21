@@ -1,8 +1,16 @@
 import React, { memo, useMemo } from 'react'
 import { Image, Pressable } from 'react-native'
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated'
 import { Box } from '@/components/ui/box'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
+import { Badge, BadgeText } from '@/components/ui/badge'
 import { growwColors } from '../../design-system/tokens/colors'
 import type { DisplayIPO } from '../../types'
 
@@ -115,17 +123,69 @@ export const IPOStockCard = memo(function IPOStockCard({
   const statusConfig = useMemo(() => {
     switch (ipo.status) {
       case 'LIVE':
-        return { color: '#f35d5d', bgColor: '#ffe5e5', label: 'CLOSED' } // Red for closed/live
+        return { action: 'success' as const, label: 'LIVE', hasDot: true, dotColor: '#22c55e', isBlinking: true }
       case 'UPCOMING':
-        return { color: '#757575', bgColor: '#f5f5f5', label: 'UNKNOWN' }
+        const daysUntil = getDaysUntilOpen()
+        return { action: 'warning' as const, label: daysUntil || 'UPCOMING', hasDot: true, dotColor: '#eab308', isBlinking: false }
       case 'CLOSED':
-        return { color: '#f35d5d', bgColor: '#ffe5e5', label: 'CLOSED' }
+        return { action: 'error' as const, label: 'CLOSED', hasDot: true, dotColor: '#ea580c', isBlinking: false }
       case 'LISTED':
-        return { color: '#4e5acc', bgColor: '#eef0ff', label: 'LISTED' }
+        return { action: 'info' as const, label: 'LISTED', hasDot: true, dotColor: '#3b82f6', isBlinking: false }
       default:
-        return { color: '#757575', bgColor: '#f5f5f5', label: ipo.status }
+        return { action: 'muted' as const, label: ipo.status, hasDot: false, dotColor: '#6b7280', isBlinking: false }
     }
-  }, [ipo.status])
+  }, [ipo.status, ipo.dates])
+
+  function getDaysUntilOpen(): string | null {
+    if (!ipo.dates.open) return null
+    const openDate = new Date(ipo.dates.open)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    openDate.setHours(0, 0, 0, 0)
+    const diffTime = openDate.getTime() - today.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    if (diffDays <= 0) return 'Today'
+    if (diffDays === 1) return 'Tomorrow'
+    if (diffDays <= 7) return `In ${diffDays} days`
+    return `In ${Math.ceil(diffDays / 7)} weeks`
+  }
+
+  const opacity = useSharedValue(1)
+  const scale = useSharedValue(1)
+  const glowOpacity = useSharedValue(0.6)
+
+  React.useEffect(() => {
+    if (statusConfig.isBlinking) {
+      opacity.value = withRepeat(
+        withTiming(0.5, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      )
+      scale.value = withRepeat(
+        withTiming(1.2, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      )
+      glowOpacity.value = withRepeat(
+        withTiming(0.2, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true
+      )
+    } else {
+      opacity.value = 1
+      scale.value = 1
+      glowOpacity.value = 0.6
+    }
+  }, [statusConfig.isBlinking, opacity, scale, glowOpacity])
+
+  const glowAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: glowOpacity.value,
+  }))
+
+  const dotAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }))
 
   // Truncate name to fit card
   const displayName = useMemo(() => {
@@ -149,28 +209,39 @@ export const IPOStockCard = memo(function IPOStockCard({
       }}
     >
       {/* Status Badge - Top Right */}
-      <Box
-        style={{
-          position: 'absolute',
-          top: 10,
-          right: 10,
-          backgroundColor: statusConfig.bgColor,
-          borderRadius: 4,
-          paddingHorizontal: 8,
-          paddingVertical: 3,
-        }}
-      >
-        <Text 
-          style={{
-            fontSize: 10,
-            fontWeight: 'bold',
-            color: statusConfig.color,
-            fontFamily: 'Inter',
-          }}
-        >
-          {statusConfig.label}
-        </Text>
-      </Box>
+      <Animated.View style={{
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+      }}>
+        {statusConfig.hasDot && (
+          <Box style={{ position: 'relative', width: 10, height: 10, justifyContent: 'center', alignItems: 'center' }}>
+            {/* Glow effect behind the dot */}
+            {statusConfig.isBlinking && (
+              <Animated.View style={[{
+                position: 'absolute',
+                width: 10,
+                height: 10,
+                borderRadius: 5,
+                backgroundColor: statusConfig.dotColor,
+              }, glowAnimatedStyle]} />
+            )}
+            {/* The dot */}
+            <Animated.View style={[{
+              width: 6,
+              height: 6,
+              borderRadius: 3,
+              backgroundColor: statusConfig.dotColor,
+            }, dotAnimatedStyle]} />
+          </Box>
+        )}
+        <Badge action={statusConfig.action} variant="solid" size="sm">
+          <BadgeText bold>{statusConfig.label}</BadgeText>
+        </Badge>
+      </Animated.View>
 
       {/* Company Logo */}
       <Box style={{ marginTop: 4 }}>

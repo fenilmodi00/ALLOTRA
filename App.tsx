@@ -69,7 +69,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <GluestackV3Provider mode="light">
-        <SafeAreaView style={{ flex: 1, backgroundColor: growwColors.background }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: growwColors.background }} edges={['top']}>
           <StatusBar style="auto" />
           <AppNavigator />
         </SafeAreaView>

@@ -55,4 +55,22 @@ describe('gmpChartModel', () => {
     expect(summary.change).toBe(5)
     expect(summary.changePercent).toBe(0)
   })
+
+  it('uses ipoPrice for percent when available', () => {
+    const summary = getTrendSummary([
+      { date: '2026-02-20', gmpValue: 0, ipoPrice: 100 },
+      { date: '2026-02-21', gmpValue: 5, ipoPrice: 100 },
+    ])
+
+    expect(summary.changePercent).toBe(5)
+  })
+
+  it('uses listingPercent when available on latest point', () => {
+    const summary = getTrendSummary([
+      { date: '2026-02-20', gmpValue: 0, ipoPrice: 100 },
+      { date: '2026-02-21', gmpValue: 5, ipoPrice: 100, listingPercent: 4.81 },
+    ])
+
+    expect(summary.changePercent).toBe(4.81)
+  })
 })

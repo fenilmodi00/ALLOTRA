@@ -5,6 +5,8 @@ export interface ChartPoint {
   y: number
   date: string
   gmpValue: number
+  ipoPrice?: number
+  listingPercent?: number
 }
 
 export interface GMPChartModel {
@@ -14,10 +16,10 @@ export interface GMPChartModel {
   emptyLineY: number
 }
 
-const PAD_TOP = 16
-const PAD_BOTTOM = 26
-const PAD_LEFT = 12
-const PAD_RIGHT = 44
+const PAD_TOP = 12
+const PAD_BOTTOM = 12
+const PAD_LEFT = 4
+const PAD_RIGHT = 4
 
 export const buildGMPChartModel = (history: GMPHistoryPoint[], width: number, height: number): GMPChartModel => {
   const chartWidth = Math.max(width, 1)
@@ -49,6 +51,8 @@ export const buildGMPChartModel = (history: GMPHistoryPoint[], width: number, he
       y,
       date: item.date,
       gmpValue: item.gmpValue,
+      ipoPrice: item.ipoPrice,
+      listingPercent: item.listingPercent,
     }
   })
 
@@ -110,9 +114,19 @@ export const getTrendSummary = (history: GMPHistoryPoint[]) => {
   }
 
   const first = history[0].gmpValue
-  const latest = history[history.length - 1].gmpValue
+  const latestPoint = history[history.length - 1]
+  const latest = latestPoint.gmpValue
   const change = latest - first
-  const changePercent = first === 0 ? 0 : (change / Math.abs(first)) * 100
+
+  let changePercent = 0
+
+  if (Number.isFinite(latestPoint.listingPercent)) {
+    changePercent = latestPoint.listingPercent as number
+  } else if (Number.isFinite(latestPoint.ipoPrice) && (latestPoint.ipoPrice as number) > 0) {
+    changePercent = (latest / (latestPoint.ipoPrice as number)) * 100
+  } else if (first !== 0) {
+    changePercent = (change / Math.abs(first)) * 100
+  }
 
   return {
     latest,

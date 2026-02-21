@@ -11,8 +11,8 @@ Guidance for coding agents working in this repository.
 
 ## Environment and Prerequisites
 
-- Node.js and npm are expected (lockfiles for both npm and bun exist).
-- Install dependencies with `npm install`.
+- Node.js and bun are expected (lockfiles for both bun and bun exist).
+- Install dependencies with `bun install`.
 - Optional env vars in `.env`:
   - `EXPO_PUBLIC_API_URL`
   - `EXPO_PUBLIC_API_TIMEOUT`
@@ -20,32 +20,33 @@ Guidance for coding agents working in this repository.
 
 ## Build, Lint, Test, and Dev Commands
 
-### Available npm scripts (from `package.json`)
+### Available bun scripts (from `package.json`)
 
-- `npm start` - start Expo dev server.
-- `npm run android` - start app in Android flow.
-- `npm run ios` - start app in iOS flow.
-- `npm run web` - start app in web flow.
-- `npm run test:unit` - run unit tests (Vitest).
-- `npm run test:unit:watch` - run unit tests in watch mode.
+- `bun start` - start Expo dev server.
+- `bun run android` - start app in Android flow.
+- `bun run ios` - start app in iOS flow.
+- `bun run web` - start app in web flow.
 
 ### Missing scripts to be aware of
 
-- There is currently no `npm run build` script.
-- There is currently no `npm run lint` script.
-- There is currently no `npm test` script.
+- There is currently no `bun run build` script.
+- There is currently no `bun run lint` script.
+- There is currently no `bun test` script.
 
 ### Type checking
 
 - Canonical command: `npx tsc --noEmit`.
-- Current status: this command runs successfully in the repository after the architecture hardening updates.
-- Always re-run typecheck before claiming success.
+- Current status: this command fails with a tsconfig/moduleResolution mismatch inherited from Expo base config.
+- If you need to validate types, first fix tsconfig compatibility; do not claim typecheck is passing unless re-run successfully.
 
 ### Single-test execution guidance
 
-- Use Vitest via `npm run test:unit`.
-- Run one file with: `npm run test:unit -- tests/path/to/file.test.ts`.
-- Do not introduce an additional testing framework unless explicitly requested.
+- A test runner is not configured yet (no Jest/Vitest config and no test script).
+- Therefore, there is no repo-supported command to run one test file today.
+- If tests are added in the future, prefer script-backed commands, for example:
+  - `bun test -- path/to/file.test.ts`
+  - `bun test -- -t "test name"`
+- Do not introduce a new testing framework unless explicitly requested.
 
 ### Debug and manual verification paths
 

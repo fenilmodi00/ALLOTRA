@@ -5,6 +5,7 @@ import { Box } from '@/components/ui/box'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
 import { growwColors } from '../../design-system/tokens/colors'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 interface BottomNavigationProps {
     state: any,
@@ -13,19 +14,24 @@ interface BottomNavigationProps {
 }
 
 export const BottomNavigation = ({ state, descriptors, navigation }: BottomNavigationProps) => {
+    const insets = useSafeAreaInsets();
+    const bottomPadding = Math.max(insets.bottom, 8);
+    
     return (
         <Box
             style={{
                 backgroundColor: 'white',
-                height: 64,
-                borderTopWidth: 0,
+                height: 64 + bottomPadding,
+                borderTopWidth: 1,
+                borderTopColor: '#E5E7EB',
                 shadowColor: '#000',
-                shadowOffset: { width: 0, height: 0 },
+                shadowOffset: { width: 0, height: -2 },
                 shadowOpacity: 0.1,
                 shadowRadius: 5,
                 elevation: 10,
-                justifyContent: 'center',
                 width: '100%',
+                paddingBottom: bottomPadding,
+                paddingTop: 8,
             }}
         >
             <Box

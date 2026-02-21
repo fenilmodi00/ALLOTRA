@@ -1,5 +1,5 @@
 import React, { useRef, useCallback, useMemo, useEffect } from 'react'
-import { Dimensions, NativeSyntheticEvent, NativeScrollEvent, ScrollView } from 'react-native'
+import { Dimensions, NativeSyntheticEvent, NativeScrollEvent, Animated } from 'react-native'
 import { Box } from '@/components/ui/box'
 import { IPOFilterNav } from '../common/IPOFilterNav'
 import { IPOSection } from '../ipo'
@@ -39,50 +39,54 @@ export const IPOFilterTabs = ({
   loading
 }: IPOFilterTabsProps) => {
   const scrollViewRef = useRef<any>(null)
+  const scrollX = useRef(new Animated.Value(0)).current
+  const isProgrammaticScroll = useRef(false)
 
-  // Calculate estimated height for each filter based on content
   const calculateEstimatedHeight = useCallback((filter: string) => {
     const ipos = getIPOsForFilter(filter)
     const isExpanded = showMoreIPOs[filter] || false
     
     if (ipos.length === 0) {
-      return 120 // Title + empty state box
+      return 120
     }
     
     const displayCount = isExpanded ? Math.min(ipos.length, 20) : Math.min(ipos.length, 10)
-    const rows = Math.ceil(displayCount / 2) // 2 cards per row
-    const cardHeight = 171 // IPO card height
-    const gap = 12 // Gap between cards
-    const titleHeight = 40 // Title height
-    const showMoreButton = ipos.length > 10 ? 60 : 0 // Show more button
+    const rows = Math.ceil(displayCount / 2)
+    const cardHeight = 171
+    const gap = 12
+    const titleHeight = 40
+    const showMoreButton = ipos.length > 10 ? 60 : 0
     
-    return titleHeight + (rows * cardHeight) + ((rows - 1) * gap) + showMoreButton + 20 // padding
+    return titleHeight + (rows * cardHeight) + ((rows - 1) * gap) + showMoreButton + 20
   }, [getIPOsForFilter, showMoreIPOs])
 
-  // Get current active filter's estimated height
   const activeFilterHeight = useMemo(() => {
     return calculateEstimatedHeight(activeFilter)
   }, [activeFilter, calculateEstimatedHeight])
 
-  // Sync ScrollView position with active filter
   useEffect(() => {
     const index = filters.indexOf(activeFilter)
-    if (index !== -1 && scrollViewRef.current) {
+    if (index !== -1) {
+      isProgrammaticScroll.current = true
+      if (scrollViewRef.current) {
+        scrollViewRef.current.scrollTo({ 
+          x: index * SCREEN_WIDTH, 
+          animated: true 
+        })
+      }
       setTimeout(() => {
-        scrollViewRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: false })
-      }, 100)
+        isProgrammaticScroll.current = false
+      }, 400)
     }
   }, [activeFilter, filters])
 
   const handleTabChange = useCallback((tab: string) => {
     onFilterChange(tab)
-    const index = filters.indexOf(tab)
-    if (index !== -1 && scrollViewRef.current) {
-      scrollViewRef.current.scrollTo({ x: index * SCREEN_WIDTH, animated: true })
-    }
-  }, [filters, onFilterChange])
+  }, [onFilterChange])
 
-  const onMomentumScrollEnd = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const handleMomentumScrollEnd = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (isProgrammaticScroll.current) return
+    
     const contentOffsetX = e.nativeEvent.contentOffset.x
     const index = Math.round(contentOffsetX / SCREEN_WIDTH)
     const tab = filters[index]
@@ -91,7 +95,6 @@ export const IPOFilterTabs = ({
     }
   }, [filters, activeFilter, onFilterChange])
 
-  // Render all filter pages for swipe functionality
   const renderAllPages = useMemo(() => {
     return filters.map((filter) => {
       const ipos = getIPOsForFilter(filter)
@@ -103,7 +106,7 @@ export const IPOFilterTabs = ({
           style={{ 
             width: SCREEN_WIDTH, 
             paddingHorizontal: 20,
-            minHeight: activeFilterHeight // Use dynamic height
+            minHeight: activeFilterHeight
           }}
         >
           <IPOSection
@@ -133,14 +136,17 @@ export const IPOFilterTabs = ({
         onFilterChange={handleTabChange}
       />
       
-      {/* Horizontal ScrollView with dynamic height */}
       <Box style={{ height: activeFilterHeight }}>
-        <ScrollView
+        <Animated.ScrollView
           ref={scrollViewRef}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={onMomentumScrollEnd}
+          onMomentumScrollEnd={handleMomentumScrollEnd}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { useNativeDriver: true }
+          )}
           scrollEventThrottle={16}
           contentContainerStyle={{
             flexDirection: 'row'
@@ -150,7 +156,7 @@ export const IPOFilterTabs = ({
           }}
         >
           {renderAllPages}
-        </ScrollView>
+        </Animated.ScrollView>
       </Box>
     </Box>
   )

@@ -16,14 +16,55 @@ import { mapAllotmentStatus } from './mappers/allotmentMapper'
 const normalizeGMPHistory = (rows: GMPHistoryRawPoint[]): GMPHistoryPoint[] => {
   return rows
     .map((row) => ({
-      date: row.date,
-      gmpValue: Number(row.gmp_value ?? row.gmp ?? Number.NaN),
-      timestamp: Date.parse(row.date),
+      date: row.date ?? row.timestamp ?? row.time ?? '',
+      gmpValue: Number(row.gmp_value ?? row.gmp ?? row.value ?? Number.NaN),
+      timestamp: Date.parse(row.date ?? row.timestamp ?? row.time ?? ''),
+      ipoPrice: Number(row.ipo_price ?? row.ipoPrice ?? Number.NaN),
+      listingPercent: Number(row.listing_percent ?? row.listingPercent ?? Number.NaN),
     }))
     .filter((row) => row.date && Number.isFinite(row.gmpValue) && Number.isFinite(row.timestamp))
     .sort((a, b) => a.timestamp - b.timestamp)
-    .slice(-7)
-    .map(({ date, gmpValue }) => ({ date, gmpValue }))
+    .map(({ date, gmpValue, ipoPrice, listingPercent }) => {
+      const point: GMPHistoryPoint = { date, gmpValue }
+
+      if (Number.isFinite(ipoPrice)) {
+        point.ipoPrice = ipoPrice
+      }
+
+      if (Number.isFinite(listingPercent)) {
+        point.listingPercent = listingPercent
+      }
+
+      return point
+    })
+}
+
+const getGMPHistoryRows = (payload: GMPHistoryResponse | GMPHistoryRawPoint[] | null | undefined): GMPHistoryRawPoint[] => {
+  if (Array.isArray(payload)) {
+    return payload
+  }
+
+  if (!payload) {
+    return []
+  }
+
+  if (Array.isArray(payload.chart)) {
+    return payload.chart
+  }
+
+  if (Array.isArray(payload.chart_data)) {
+    return payload.chart_data
+  }
+
+  if (Array.isArray(payload.history)) {
+    return payload.history
+  }
+
+  if (Array.isArray(payload.points)) {
+    return payload.points
+  }
+
+  return []
 }
 
 // IPO Service - All IPO-related API calls
@@ -151,11 +192,10 @@ export const ipoService = {
   // Get GMP history for charting
   async getGMPHistory(stockId: string): Promise<GMPHistoryPoint[]> {
     const response = await apiClient.get<{ data: GMPHistoryResponse | GMPHistoryRawPoint[]; success: boolean }>(
-      `/gmp/history/${stockId}`
+      `/gmp/history/${stockId}/chart`
     )
 
-    const payload = response.data.data
-    const rows = Array.isArray(payload) ? payload : payload?.history || []
+    const rows = getGMPHistoryRows(response.data.data)
 
     return normalizeGMPHistory(rows)
   },

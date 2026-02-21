@@ -54,11 +54,6 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
   const closeDate = ipo.dates.close ? new Date(ipo.dates.close) : null
   const resultDate = ipo.dates.allotment ? new Date(ipo.dates.allotment) : null
   const listingDate = ipo.dates.listing ? new Date(ipo.dates.listing) : null
-  const chartDisabledLabel = ipo.gmp?.value === undefined
-    ? 'GMP not active'
-    : !ipo.stockId
-      ? 'GMP history unavailable'
-      : 'No GMP history yet'
 
   const timelineStatus = (eventDate: Date | null) => {
     if (!eventDate) return 'pending'
@@ -181,14 +176,11 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
           </View>
         )}
 
-        <View style={{ backgroundColor: 'white', padding: 20, marginBottom: 8 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: growwColors.text, marginBottom: 12 }}>GMP Trend (7D)</Text>
-          <GMPWeekInteractiveChart
-            history={gmpHistory}
-            loading={gmpHistoryLoading}
-            disabledLabel={chartDisabledLabel}
-          />
-        </View>
+        {!gmpHistoryLoading && gmpHistory.length > 0 && (
+          <View style={{ backgroundColor: 'white', padding: 20, marginBottom: 8 }}>
+            <GMPWeekInteractiveChart history={gmpHistory} />
+          </View>
+        )}
 
         <View style={{ backgroundColor: 'white', padding: 20, marginBottom: 8 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: growwColors.text, marginBottom: 16 }}>IPO Details</Text>

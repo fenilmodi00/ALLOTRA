@@ -92,19 +92,31 @@ export interface DisplayIPO {
 }
 
 export interface GMPHistoryRawPoint {
-  date: string
+  date?: string
+  time?: string
+  timestamp?: string
   gmp_value?: number
   gmp?: number
+  value?: number
+  ipo_price?: number
+  ipoPrice?: number
+  listing_percent?: number
+  listingPercent?: number
 }
 
 export interface GMPHistoryPoint {
   date: string
   gmpValue: number
+  ipoPrice?: number
+  listingPercent?: number
 }
 
 export interface GMPHistoryResponse {
   stock_id?: string
   history?: GMPHistoryRawPoint[]
+  chart_data?: GMPHistoryRawPoint[]
+  chart?: GMPHistoryRawPoint[]
+  points?: GMPHistoryRawPoint[]
 }
 
 // Stock/Index Data Model
