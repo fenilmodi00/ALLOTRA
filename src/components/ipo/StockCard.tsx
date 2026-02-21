@@ -1,10 +1,10 @@
 import React, { memo } from 'react'
-import { Pressable } from 'react-native'
+import { Image as RNImage, Pressable } from 'react-native'
 import { Box } from '@/components/ui/box'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
 import { growwColors } from '../../design-system/tokens/colors'
-import { formatCurrency, formatPriceChange, formatPercentage } from '../../utils/formatters'
+import { formatCurrency, formatPercentage } from '../../utils/formatters'
 
 interface StockCardProps {
   logoUrl?: string
@@ -17,8 +17,11 @@ interface StockCardProps {
   onPress?: () => void
 }
 
-// Company logo placeholder component
-const CompanyLogo = ({ name, size = 60 }: { name: string; size?: number }) => {
+/**
+ * Squircle logo matching Groww Figma design (node 1:6097).
+ * borderRadius: 12 on a 38x38 box gives the characteristic Groww "squircle" logo look.
+ */
+const CompanyLogo = ({ logoUrl, name, size = 38 }: { logoUrl?: string; name: string; size?: number }) => {
   const initials = name
     .split(' ')
     .map(word => word.charAt(0))
@@ -26,12 +29,34 @@ const CompanyLogo = ({ name, size = 60 }: { name: string; size?: number }) => {
     .substring(0, 2)
     .toUpperCase()
 
+  if (logoUrl) {
+    return (
+      <Box
+        style={{
+          width: size,
+          height: size,
+          borderRadius: 12,
+          backgroundColor: '#f8f9fa',
+          borderWidth: 1,
+          borderColor: growwColors.border,
+          overflow: 'hidden',
+        }}
+      >
+        <RNImage
+          source={{ uri: logoUrl }}
+          style={{ width: size, height: size, borderRadius: 12 }}
+          resizeMode="contain"
+        />
+      </Box>
+    )
+  }
+
   return (
     <Box
       style={{
         width: size,
         height: size,
-        borderRadius: size / 2,
+        borderRadius: 12,
         backgroundColor: growwColors.primaryLight,
         justifyContent: 'center',
         alignItems: 'center',
@@ -39,19 +64,27 @@ const CompanyLogo = ({ name, size = 60 }: { name: string; size?: number }) => {
         borderColor: growwColors.border,
       }}
     >
-      <Text
-        style={{ fontSize: size > 50 ? 18 : 14, fontWeight: '700', color: growwColors.primary }}
-      >
+      <Text style={{ fontSize: 14, fontWeight: '600', color: growwColors.primary }}>
         {initials}
       </Text>
     </Box>
   )
 }
 
+/**
+ * StockCard - Groww-style flat card for stock/IPO grid sections.
+ *
+ * Design specs from Figma node 1:6097 (Most bought Cards):
+ * - borderRadius: 10, borderWidth: 1, borderColor: #e8e8e8
+ * - No shadows or elevation
+ * - Logo: 38x38 squircle (borderRadius: 12), top-left at 14px inset
+ * - Name: Roboto Medium 16px (#000)
+ * - Price: Roboto Regular 15px (#000)
+ * - Change: Roboto SemiBold 13px (#00b386 or #f35d5d)
+ */
 export const StockCard = memo(function StockCard({
   logoUrl,
   stockName,
-  symbol,
   price,
   change,
   changePercent,
@@ -59,74 +92,53 @@ export const StockCard = memo(function StockCard({
   onPress,
 }: StockCardProps) {
   const changeColor = isPositive ? growwColors.success : growwColors.error
+  const changeSign = isPositive ? '+' : ''
 
   const CardContent = (
+    // Flat card: no shadow, no elevation — pure border-only aesthetic
     <Box
       style={{
         backgroundColor: growwColors.surface,
         borderColor: growwColors.border,
         borderWidth: 1,
-        borderRadius: 13,
-        padding: 12,
+        borderRadius: 10,
+        padding: 14,
         width: '48%',
-        height: 171,
+        height: 160,
         justifyContent: 'space-between',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 1,
       }}
     >
-      {/* Company Logo */}
+      {/* Logo top-left, squircle shape */}
       <Box style={{ alignSelf: 'flex-start' }}>
-        <CompanyLogo name={stockName} size={60} />
+        <CompanyLogo logoUrl={logoUrl} name={stockName} size={38} />
       </Box>
 
-      {/* Stock Info */}
-      <VStack style={{ gap: 4, flex: 1, justifyContent: 'flex-end' }}>
+      {/* Text stack at bottom */}
+      <VStack style={{ gap: 2 }}>
+        {/* Roboto Medium 16px — company name */}
         <Text
-          style={{ fontSize: 14, fontWeight: '500', color: growwColors.text, fontFamily: 'Inter' }}
+          style={{ fontSize: 16, fontWeight: '500', color: growwColors.text }}
           numberOfLines={1}
         >
           {stockName}
         </Text>
 
-        <Text
-          style={{ fontSize: 15, fontWeight: '700', color: growwColors.text, fontFamily: 'Inter' }}
-        >
+        {/* Roboto Regular 15px — current price */}
+        <Text style={{ fontSize: 15, fontWeight: '400', color: growwColors.text }}>
           ₹{price.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
         </Text>
 
-        <Text
-          style={{ fontSize: 14, fontWeight: '500', color: changeColor, fontFamily: 'Inter' }}
-        >
-          {isPositive ? '+' : ''}₹{Math.abs(change).toFixed(2)} ({isPositive ? '+' : ''}{changePercent.toFixed(2)}%)
+        {/* Roboto SemiBold 13px — change with sign */}
+        <Text style={{ fontSize: 13, fontWeight: '600', color: changeColor }}>
+          {changeSign}₹{Math.abs(change).toFixed(2)} ({changeSign}{changePercent.toFixed(2)}%)
         </Text>
       </VStack>
-
-      {/* Watchlist Icon */}
-      <Box
-        style={{
-          position: 'absolute',
-          bottom: 12,
-          left: 12,
-          width: 22,
-          height: 22,
-          backgroundColor: growwColors.backgroundSecondary,
-          borderRadius: 11,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <Text style={{ fontSize: 12, color: growwColors.textSecondary }}>+</Text>
-      </Box>
     </Box>
   )
 
   if (onPress) {
     return (
-      <Pressable 
+      <Pressable
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={`${stockName}, price ${formatCurrency(price)}, ${isPositive ? 'up' : 'down'} ${formatPercentage(changePercent)}`}

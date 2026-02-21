@@ -13,6 +13,17 @@ interface IndexCardProps {
   isPositive: boolean
 }
 
+/**
+ * IndexCard - Groww-style flat index card.
+ *
+ * Design specs from Figma node 1:6077 (Index 1 / Index 2):
+ * - Size: ~195 wide x 68 tall
+ * - borderRadius: 10, borderWidth: 1, borderColor: #e8e8e8
+ * - No shadows or elevation
+ * - Name: Roboto Medium 13px (#000)
+ * - Value: Roboto Regular 13px (#000)
+ * - Change: Roboto SemiBold 13px (#f35d5d or #00b386)
+ */
 export const IndexCard = memo(function IndexCard({
   indexName,
   value,
@@ -20,29 +31,31 @@ export const IndexCard = memo(function IndexCard({
   changePercent,
   isPositive,
 }: IndexCardProps) {
-  const changeColor = isPositive ? '#00b386' : '#f21717' // Figma colors
+  const changeColor = isPositive ? growwColors.success : growwColors.error
+  const changeSign = isPositive ? '+' : ''
 
   return (
     <Box
       style={{
         backgroundColor: growwColors.surface,
-        borderColor: '#d2cdcd',
+        borderColor: growwColors.border,
         borderWidth: 1,
-        borderRadius: 5,
-        padding: 10,
-        width: 169,
-        height: 73,
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        flex: 1,
+        height: 68,
         justifyContent: 'center',
       }}
       accessibilityRole="text"
       accessibilityLabel={`${indexName}, ${value.toFixed(2)}, ${isPositive ? 'up' : 'down'} ${formatPercentage(changePercent)}`}
     >
-      <VStack style={{ gap: 2 }}>
+      <VStack style={{ gap: 3 }}>
+        {/* Roboto Medium 13px — index name */}
         <Text
           style={{
-            fontFamily: 'Inter',
-            fontWeight: 'bold',
-            fontSize: 14,
+            fontSize: 13,
+            fontWeight: '500',
             color: growwColors.text,
           }}
           numberOfLines={1}
@@ -50,20 +63,23 @@ export const IndexCard = memo(function IndexCard({
           {indexName}
         </Text>
 
-        <Box style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {/* Value + change on same row */}
+        <Box style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          {/* Roboto Regular 13px — index value */}
           <Text
             style={{
-              fontFamily: 'Inter',
-              fontWeight: 'bold',
-              fontSize: 14,
+              fontSize: 13,
+              fontWeight: '400',
               color: growwColors.text,
             }}
             numberOfLines={1}
           >
             {value.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
           </Text>
-          <Text style={{ color: changeColor, fontWeight: 'bold', fontSize: 14, marginLeft: 8 }}>
-            {isPositive ? '+' : ''} {formatPriceChange(change)}
+
+          {/* Roboto SemiBold 13px — change amount and percent */}
+          <Text style={{ fontSize: 13, fontWeight: '600', color: changeColor }}>
+            {changeSign}{formatPriceChange(Math.abs(change))} ({changeSign}{Math.abs(changePercent).toFixed(2)}%)
           </Text>
         </Box>
       </VStack>

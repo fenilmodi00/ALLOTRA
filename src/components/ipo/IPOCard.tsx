@@ -30,7 +30,8 @@ const getStatusConfig = (status: DisplayIPO['status']) => {
 }
 
 // Company logo component - shows real logo from API or fallback to initials
-const CompanyLogo = ({ ipo, size = 48 }: { ipo: DisplayIPO; size?: number }) => {
+// Logo uses squircle shape (borderRadius: 12) matching Groww Figma design
+const CompanyLogo = ({ ipo, size = 38 }: { ipo: DisplayIPO; size?: number }) => {
   const initials = ipo.name
     .split(' ')
     .map(word => word.charAt(0))
@@ -45,7 +46,7 @@ const CompanyLogo = ({ ipo, size = 48 }: { ipo: DisplayIPO; size?: number }) => 
         style={{
           width: size,
           height: size,
-          borderRadius: size / 2,
+          borderRadius: 12,
           backgroundColor: '#f8f9fa',
           justifyContent: 'center',
           alignItems: 'center',
@@ -57,26 +58,26 @@ const CompanyLogo = ({ ipo, size = 48 }: { ipo: DisplayIPO; size?: number }) => 
         <RNImage
           source={{ uri: ipo.logoUrl }}
           style={{
-            width: size * 0.8,
-            height: size * 0.8,
-            borderRadius: (size * 0.8) / 2,
+            width: size,
+            height: size,
+            borderRadius: 12,
           }}
           resizeMode="contain"
           onError={() => {
-            console.log('❌ Failed to load logo for:', ipo.name)
+            if (__DEV__) console.log('Failed to load logo for:', ipo.name)
           }}
         />
       </Box>
     )
   }
 
-  // Fallback to initials
+  // Fallback to initials with squircle shape
   return (
     <Box
       style={{
         width: size,
         height: size,
-        borderRadius: size / 2,
+        borderRadius: 12,
         backgroundColor: growwColors.primaryLight,
         justifyContent: 'center',
         alignItems: 'center',
@@ -85,7 +86,7 @@ const CompanyLogo = ({ ipo, size = 48 }: { ipo: DisplayIPO; size?: number }) => 
       }}
     >
       <Text
-        style={{ fontSize: size > 40 ? 16 : 12, fontWeight: '700', color: growwColors.primary }}
+        style={{ fontSize: 14, fontWeight: '600', color: growwColors.primary }}
       >
         {initials}
       </Text>
@@ -126,35 +127,33 @@ export const IPOCard = memo(function IPOCard({
   }, [ipo.dates])
 
   const CardContent = (
+    // Flat card matching Groww Figma design: borderRadius 10, 1px border, no shadow
     <Box
       style={{
         backgroundColor: growwColors.surface,
-        borderRadius: 13,
+        borderRadius: 10,
         borderWidth: 1,
         borderColor: growwColors.border,
         padding: 16,
         marginBottom: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 1,
       }}
     >
       {/* Header with Logo and Company Name */}
       <HStack style={{ alignItems: 'flex-start', marginBottom: 12, gap: 12 }}>
-        <CompanyLogo ipo={ipo} size={48} />
+        <CompanyLogo ipo={ipo} size={38} />
         
         <VStack style={{ flex: 1, gap: 4 }}>
           <HStack style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <VStack style={{ flex: 1, marginRight: 8 }}>
+              {/* Roboto Medium 16px - matches Figma font-['Roboto:Medium'] */}
               <Text 
-                style={{ fontSize: 16, fontWeight: '700', color: growwColors.text }}
+                style={{ fontSize: 16, fontWeight: '500', color: growwColors.text }}
                 numberOfLines={1}
               >
                 {ipo.name}
               </Text>
-              <Text style={{ fontSize: 12, color: growwColors.textSecondary, marginTop: 2 }}>
+              {/* Roboto Regular 12px for secondary info */}
+              <Text style={{ fontSize: 12, fontWeight: '400', color: growwColors.textSecondary, marginTop: 2 }}>
                 {dates}
               </Text>
             </VStack>
@@ -167,7 +166,7 @@ export const IPOCard = memo(function IPOCard({
                 borderRadius: 4,
               }}
             >
-              <Text style={{ fontSize: 10, fontWeight: '700', color: growwColors.textInverse }}>
+              <Text style={{ fontSize: 10, fontWeight: '600', color: growwColors.textInverse }}>
                 {statusConfig.label}
               </Text>
             </Box>
@@ -179,12 +178,14 @@ export const IPOCard = memo(function IPOCard({
       {ipo.gmp && ipo.gmp.value !== undefined && (
         <HStack style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <VStack>
-            <Text style={{ fontSize: 12, color: growwColors.textSecondary }}>
+            {/* Roboto Regular 12px label */}
+            <Text style={{ fontSize: 12, fontWeight: '400', color: growwColors.textSecondary }}>
               GMP
             </Text>
+            {/* Roboto SemiBold 13px value - matches Figma font-['Roboto:SemiBold'] */}
             <Text 
               style={{
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: '600',
                 color: ipo.gmp.value >= 0 ? growwColors.success : growwColors.error,
               }}
@@ -195,17 +196,17 @@ export const IPOCard = memo(function IPOCard({
           
           {ipo.gmp.gainPercent !== undefined && (
             <VStack style={{ alignItems: 'flex-end' }}>
-              <Text style={{ fontSize: 12, color: growwColors.textSecondary }}>
+              <Text style={{ fontSize: 12, fontWeight: '400', color: growwColors.textSecondary }}>
                 Expected Gain
               </Text>
               <Text 
                 style={{
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: '600',
                   color: ipo.gmp.gainPercent >= 0 ? growwColors.success : growwColors.error,
                 }}
               >
-                {ipo.gmp.gainPercent >= 0 ? '+' : ''} {ipo.gmp.gainPercent.toFixed(2)}%
+                {ipo.gmp.gainPercent >= 0 ? '+' : ''}{ipo.gmp.gainPercent.toFixed(2)}%
               </Text>
             </VStack>
           )}
@@ -215,10 +216,11 @@ export const IPOCard = memo(function IPOCard({
       {/* Footer with Price Range and Action Button */}
       <HStack style={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <VStack>
-          <Text style={{ fontSize: 12, color: growwColors.textSecondary }}>
+          <Text style={{ fontSize: 12, fontWeight: '400', color: growwColors.textSecondary }}>
             Price Range
           </Text>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: growwColors.text, marginTop: 2 }}>
+          {/* Roboto Regular 15px for price value */}
+          <Text style={{ fontSize: 15, fontWeight: '400', color: growwColors.text, marginTop: 2 }}>
             {priceRange}
           </Text>
         </VStack>
@@ -229,13 +231,13 @@ export const IPOCard = memo(function IPOCard({
               backgroundColor: growwColors.primary,
               paddingHorizontal: 16,
               paddingVertical: 8,
-              borderRadius: 6,
+              borderRadius: 20,
             }}
             onPress={onCheckStatus}
             accessibilityRole="button"
             accessibilityLabel={`Check allotment status for ${ipo.name}`}
           >
-            <Text style={{ color: growwColors.textInverse, fontWeight: '600', fontSize: 13 }}>
+            <Text style={{ color: growwColors.textInverse, fontWeight: '500', fontSize: 13 }}>
               Check
             </Text>
           </Pressable>
