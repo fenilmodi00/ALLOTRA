@@ -1,8 +1,11 @@
 import React, { memo, useMemo } from 'react'
+import { View } from 'react-native'
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { Box } from '@/components/ui/box'
 import { Text } from '@/components/ui/text'
 import { growwColors } from '../../design-system/tokens/colors'
 import { IPOStockCard } from './IPOStockCard'
+import { IPOStockCardSkeleton } from './IPOStockCardSkeleton'
 import { PillButton } from '../common'
 import type { DisplayIPO } from '../../types'
 
@@ -15,6 +18,7 @@ interface IPOSectionProps {
   onCheckStatus?: (ipo: DisplayIPO) => void
   showCheckButton?: boolean
   sectionKey: string
+  loading?: boolean
 }
 
 export const IPOSection = memo(function IPOSection({
@@ -25,7 +29,8 @@ export const IPOSection = memo(function IPOSection({
   onIPOPress,
   onCheckStatus,
   showCheckButton = false,
-  sectionKey
+  sectionKey,
+  loading = false,
 }: IPOSectionProps) {
   const displayIPOs = useMemo(() => {
     const maxItems = showMore ? 20 : 10
@@ -36,14 +41,27 @@ export const IPOSection = memo(function IPOSection({
     return Math.min(ipos.length - 10, 10)
   }, [ipos.length])
 
-  if (ipos.length === 0) {
-    return (
-      <Box style={{ marginBottom: 10 }}>
-        {title ? (
-          <Text style={{ marginBottom: 15, fontSize: 18, fontWeight: '700', color: growwColors.text, fontFamily: 'Roboto' }}>
-            {title}
-          </Text>
-        ) : null}
+  const showSkeleton = loading && ipos.length === 0
+
+  return (
+    <Box style={{ marginBottom: 10 }}>
+      {title ? (
+        <Text style={{ marginBottom: 15, fontSize: 18, fontWeight: '700', color: growwColors.text, fontFamily: 'Roboto' }}>
+          {title}
+        </Text>
+      ) : null}
+
+      {showSkeleton ? (
+        <Animated.View 
+          entering={FadeIn.duration(200)} 
+          exiting={FadeOut.duration(150)}
+          style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' }}
+        >
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <IPOStockCardSkeleton key={idx} />
+          ))}
+        </Animated.View>
+      ) : ipos.length === 0 ? (
         <Box style={{ 
           padding: 15,
           alignItems: 'center',
@@ -56,40 +74,32 @@ export const IPOSection = memo(function IPOSection({
             No IPOs available at the moment
           </Text>
         </Box>
-      </Box>
-    )
-  }
-
-  return (
-    <Box style={{ marginBottom: 10 }}>
-      {title ? (
-        <Text style={{ marginBottom: 15, fontSize: 18, fontWeight: '700', color: growwColors.text, fontFamily: 'Roboto' }}>
-          {title}
-        </Text>
-      ) : null}
+      ) : (
+        <Animated.View 
+          entering={FadeIn.duration(300)}
+          style={{ 
+            flexDirection: 'row', 
+            flexWrap: 'wrap', 
+            gap: 12, 
+            justifyContent: 'space-between' 
+          }}
+        >
+          {displayIPOs.map((ipo, index) => {
+            const uniqueKey = `${sectionKey}-${ipo.id || ipo.name?.replace(/\s+/g, '') || 'unknown'}-${index}`
+            return (
+              <IPOStockCard
+                key={uniqueKey}
+                ipo={ipo}
+                onPress={() => onIPOPress(ipo)}
+                showCheckButton={showCheckButton}
+                onCheckStatus={onCheckStatus ? () => onCheckStatus(ipo) : undefined}
+              />
+            )
+          })}
+        </Animated.View>
+      )}
       
-      <Box style={{ 
-        flexDirection: 'row', 
-        flexWrap: 'wrap', 
-        gap: 12, 
-        justifyContent: 'space-between' 
-      }}>
-        {displayIPOs.map((ipo, index) => {
-          // Generate a simple unique key for production
-          const uniqueKey = `${sectionKey}-${ipo.id || ipo.name?.replace(/\s+/g, '') || 'unknown'}-${index}`
-          return (
-            <IPOStockCard
-              key={uniqueKey}
-              ipo={ipo}
-              onPress={() => onIPOPress(ipo)}
-              showCheckButton={showCheckButton}
-              onCheckStatus={onCheckStatus ? () => onCheckStatus(ipo) : undefined}
-            />
-          )
-        })}
-      </Box>
-      
-      {ipos.length > 10 && (
+      {!showSkeleton && ipos.length > 10 && (
         <Box style={{ marginTop: 16, alignItems: 'center' }}>
           <PillButton
             label={showMore ? 'Show Less' : `Show ${showMoreCount} More`}

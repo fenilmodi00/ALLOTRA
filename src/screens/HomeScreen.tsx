@@ -67,7 +67,7 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
         setShowMorePopular(prev => !prev)
     }, [])
 
-    const filters = ['ongoing', 'upcoming', 'allotted', 'listed']
+    const filters = ['upcoming', 'ongoing', 'allotted', 'listed']
 
     return (
         <Box className="flex-1 bg-background-0">

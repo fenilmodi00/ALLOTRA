@@ -110,10 +110,84 @@ export const IPOStockCard = memo(function IPOStockCard({
     return null
   }, [ipo.gmp])
 
+  function getDaysUntilClose(): string | null {
+    if (!ipo.dates.close) return null
+    const closeDate = new Date(ipo.dates.close)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    closeDate.setHours(0, 0, 0, 0)
+    const diffTime = closeDate.getTime() - today.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    if (diffDays < 0) return null
+    if (diffDays === 0) return 'Closes today'
+    if (diffDays === 1) return 'Closes tomorrow'
+    return `Closes in ${diffDays} days`
+  }
+
+  const liveStatusMeta = useMemo(() => {
+    if (ipo.status.toUpperCase() !== 'LIVE') {
+      return {
+        isEffectivelyClosed: false,
+        label: null as string | null,
+        dotColor: '#22c55e',
+        isBlinking: true,
+      }
+    }
+
+    const now = new Date()
+    const closeLabel = getDaysUntilClose()
+
+    if (!ipo.dates.close) {
+      return {
+        isEffectivelyClosed: false,
+        label: closeLabel,
+        dotColor: '#22c55e',
+        isBlinking: true,
+      }
+    }
+
+    const closeDate = new Date(ipo.dates.close)
+    closeDate.setHours(16, 0, 0, 0)
+
+    const allotmentDate = ipo.dates.allotment ? new Date(ipo.dates.allotment) : null
+    if (allotmentDate) {
+      allotmentDate.setHours(0, 0, 0, 0)
+    }
+
+    const beforeAllotment = !allotmentDate || now < allotmentDate
+    const isAfterCloseCutoff = now >= closeDate
+    const isEffectivelyClosed = isAfterCloseCutoff && beforeAllotment
+
+    if (isEffectivelyClosed) {
+      return {
+        isEffectivelyClosed: true,
+        label: 'Closed',
+        dotColor: '#dc2626',
+        isBlinking: false,
+      }
+    }
+
+    return {
+      isEffectivelyClosed: false,
+      label: closeLabel,
+      dotColor: '#22c55e',
+      isBlinking: true,
+    }
+  }, [ipo.status, ipo.dates])
+
   const statusConfig = useMemo(() => {
     switch (ipo.status.toUpperCase()) {
-      case 'LIVE':
-        return { label: 'LIVE', hasDot: true, dotColor: '#22c55e', isBlinking: true, bgColor: '#dcfce7', textColor: '#16a34a' }
+      case 'LIVE': {
+        const closeLabel = liveStatusMeta.label
+        return {
+          label: closeLabel || 'LIVE',
+          hasDot: true,
+          dotColor: liveStatusMeta.dotColor,
+          isBlinking: liveStatusMeta.isBlinking,
+          bgColor: '#dcfce7',
+          textColor: '#16a34a',
+        }
+      }
       case 'UPCOMING': {
         const daysUntil = getDaysUntilOpen()
         return { label: daysUntil || 'UPCOMING', hasDot: true, dotColor: '#eab308', isBlinking: false, bgColor: '#fef9c3', textColor: '#a16207' }
@@ -125,7 +199,7 @@ export const IPOStockCard = memo(function IPOStockCard({
       default:
         return { label: ipo.status, hasDot: false, dotColor: '#6b7280', isBlinking: false, bgColor: '#f3f4f6', textColor: '#6b7280' }
     }
-  }, [ipo.status, ipo.dates])
+  }, [ipo.status, ipo.dates, liveStatusMeta])
 
   function getDaysUntilOpen(): string | null {
     if (!ipo.dates.open) return null
@@ -178,6 +252,9 @@ export const IPOStockCard = memo(function IPOStockCard({
     opacity: opacity.value,
   }))
 
+  const isLiveIPO = ipo.status.toUpperCase() === 'LIVE'
+  const liveCloseLabel = isLiveIPO ? liveStatusMeta.label : null
+
   const CardContent = (
     // Figma node 1:6097: 176×160px, borderRadius:10, border:1 #e8e8e8, NO shadow/elevation
     <Box
@@ -191,46 +268,98 @@ export const IPOStockCard = memo(function IPOStockCard({
         overflow: 'hidden',
       }}
     >
-      {/* Status Badge — top-right, z-index above logo */}
-      <Animated.View style={{
-        position: 'absolute',
-        top: 8,
-        right: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        zIndex: 1,
-      }}>
-        {statusConfig.hasDot && (
-          <Box style={{ position: 'relative', width: 10, height: 10, justifyContent: 'center', alignItems: 'center' }}>
-            {statusConfig.isBlinking && (
-              <Animated.View style={[{
+      {isLiveIPO ? (
+        <>
+          <Animated.View style={{
+            position: 'absolute',
+            top: 12,
+            right: 14,
+            zIndex: 1,
+          }}>
+            <Box style={{ position: 'relative', width: 12, height: 12, justifyContent: 'center', alignItems: 'center' }}>
+              <Animated.View
+                style={[{
+                  position: 'absolute',
+                  width: 12,
+                  height: 12,
+                  borderRadius: 6,
+                  backgroundColor: statusConfig.dotColor,
+                  shadowColor: statusConfig.dotColor,
+                  shadowOpacity: 0.4,
+                  shadowRadius: 4,
+                  shadowOffset: { width: 0, height: 0 },
+                  elevation: 3,
+                }, glowAnimatedStyle]}
+              />
+              <Animated.View
+                style={[{
+                  width: 7,
+                  height: 7,
+                  borderRadius: 4,
+                  backgroundColor: statusConfig.dotColor,
+                }, dotAnimatedStyle]}
+              />
+            </Box>
+          </Animated.View>
+
+          {liveCloseLabel ? (
+            <Text
+              style={{
                 position: 'absolute',
-                width: 10,
-                height: 10,
-                borderRadius: 5,
-                backgroundColor: statusConfig.dotColor,
-              }, glowAnimatedStyle]} />
-            )}
-            <Animated.View style={[{
-              width: 6,
-              height: 6,
-              borderRadius: 3,
-              backgroundColor: statusConfig.dotColor,
-            }, dotAnimatedStyle]} />
-          </Box>
-        )}
+                top: 28,
+                right: 14,
+                fontSize: 11,
+                fontWeight: '500',
+                color: liveStatusMeta.isEffectivelyClosed ? '#dc2626' : growwColors.textSecondary,
+                textAlign: 'right',
+                zIndex: 1,
+              }}
+            >
+              {liveCloseLabel}
+            </Text>
+          ) : null}
+        </>
+      ) : (
         <Animated.View style={{
-          backgroundColor: statusConfig.bgColor,
-          borderRadius: 4,
-          paddingHorizontal: 6,
-          paddingVertical: 2,
+          position: 'absolute',
+          top: 8,
+          right: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 4,
+          zIndex: 1,
         }}>
-          <Text style={{ fontSize: 10, fontWeight: '700', color: statusConfig.textColor, letterSpacing: 0.3 }}>
-            {statusConfig.label}
-          </Text>
+          {statusConfig.hasDot && (
+            <Box style={{ position: 'relative', width: 10, height: 10, justifyContent: 'center', alignItems: 'center' }}>
+              {statusConfig.isBlinking && (
+                <Animated.View style={[{
+                  position: 'absolute',
+                  width: 10,
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: statusConfig.dotColor,
+                }, glowAnimatedStyle]} />
+              )}
+              <Animated.View style={[{
+                width: 6,
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: statusConfig.dotColor,
+              }, dotAnimatedStyle]} />
+            </Box>
+          )}
+          <Animated.View style={{
+            backgroundColor: statusConfig.bgColor,
+            borderRadius: 4,
+            paddingHorizontal: 6,
+            paddingVertical: 2,
+          }}>
+            <Text style={{ fontSize: 10, fontWeight: '700', color: statusConfig.textColor, letterSpacing: 0.3 }}>
+              {statusConfig.label}
+            </Text>
+          </Animated.View>
         </Animated.View>
-      </Animated.View>
+      )}
 
       {/* Logo — Figma: left:14 top:13, 38×38, borderRadius:12 */}
       <Box style={{ position: 'absolute', top: 13, left: 14 }}>

@@ -3,7 +3,6 @@ import { Dimensions, NativeSyntheticEvent, NativeScrollEvent, Animated } from 'r
 import { Box } from '@/components/ui/box'
 import { IPOFilterNav } from '../common/IPOFilterNav'
 import { IPOSection } from '../ipo'
-import { LoadingText } from '../ui'
 import type { DisplayIPO } from '../../types'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
@@ -69,9 +68,10 @@ export const IPOFilterTabs = ({
     if (index !== -1) {
       isProgrammaticScroll.current = true
       if (scrollViewRef.current) {
+        // Change from animated: true to animated: false for the initial scroll
         scrollViewRef.current.scrollTo({ 
           x: index * SCREEN_WIDTH, 
-          animated: true 
+          animated: false 
         })
       }
       setTimeout(() => {
@@ -98,7 +98,9 @@ export const IPOFilterTabs = ({
   const renderAllPages = useMemo(() => {
     return filters.map((filter) => {
       const ipos = getIPOsForFilter(filter)
-      const title = `${FILTER_TITLES[filter]} (${ipos.length})`
+      // Show count only when we have data; omit during initial load
+      const countLabel = !loading || ipos.length > 0 ? ` (${ipos.length})` : ''
+      const title = `${FILTER_TITLES[filter]}${countLabel}`
       
       return (
         <Box 
@@ -118,15 +120,12 @@ export const IPOFilterTabs = ({
             onCheckStatus={filter === 'allotted' ? onCheckStatus : undefined}
             showCheckButton={filter === 'allotted'}
             sectionKey={filter}
+            loading={loading}
           />
         </Box>
       )
     })
-  }, [filters, getIPOsForFilter, showMoreIPOs, onToggleShowMore, onIPOPress, onCheckStatus, activeFilterHeight])
-
-  if (loading) {
-    return <LoadingText message="Loading IPO data..." />
-  }
+  }, [filters, getIPOsForFilter, showMoreIPOs, onToggleShowMore, onIPOPress, onCheckStatus, activeFilterHeight, loading])
 
   return (
     <Box>

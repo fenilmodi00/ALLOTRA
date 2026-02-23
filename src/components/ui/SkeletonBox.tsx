@@ -1,12 +1,12 @@
 import React from 'react'
-import { Box } from '@/components/ui/box'
-import { growwColors } from '../../design-system/tokens/colors'
+import { ViewStyle } from 'react-native'
+import { Skeleton } from './Skeleton'
 
 interface SkeletonBoxProps {
   width: number
   height: number
   borderRadius?: number
-  style?: any
+  style?: ViewStyle
 }
 
 export const SkeletonBox = ({ 
@@ -16,16 +16,12 @@ export const SkeletonBox = ({
   style 
 }: SkeletonBoxProps) => {
   return (
-    <Box 
-      style={{ 
-        width, 
-        height, 
-        backgroundColor: growwColors.surface, 
-        borderRadius,
-        borderWidth: 1,
-        borderColor: growwColors.border,
-        ...style
-      }} 
+    <Skeleton
+      width={width}
+      height={height}
+      borderRadius={borderRadius}
+      style={style}
     />
   )
 }
+

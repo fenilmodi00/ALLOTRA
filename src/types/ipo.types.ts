@@ -4,6 +4,35 @@ export type IPOStatus = 'LIVE' | 'UPCOMING' | 'CLOSED' | 'LISTED' | 'UNKNOWN'
 // Allotment Status Types
 export type AllotmentStatus = 'ALLOTTED' | 'NOT_ALLOTTED' | 'PENDING' | 'NOT_APPLIED'
 
+// Financial data (Revenue/Profit/Total Assets)
+export interface IPOFinancial {
+  year: string
+  revenue?: number
+  profit?: number
+  totalAssets?: number
+}
+
+// Category/Strength
+export interface IPOCategory {
+  label: string
+  description?: string
+}
+
+// FAQ
+export interface IPOFAQ {
+  question: string
+  answer: string
+}
+
+// Subscription data by investor type
+export interface SubscriptionData {
+  qib?: number
+  nii?: number
+  rii?: number
+  total?: number
+  lastUpdated?: string
+}
+
 // Backend IPO Data Model (matches API response)
 export interface IPO {
   id: string
@@ -89,6 +118,13 @@ export interface DisplayIPO {
     listingGain?: string
     dataSource?: string
   }
+  // V2 API Extended Fields
+  financials?: IPOFinancial[]
+  categories?: IPOCategory[]
+  faqs?: IPOFAQ[]
+  subscription?: SubscriptionData
+  foundedYear?: string
+  mdCeo?: string
 }
 
 export interface GMPHistoryRawPoint {
@@ -185,4 +221,35 @@ export interface PaginatedResponse<T> {
   page: number
   pageSize: number
   hasMore: boolean
+}
+
+// V2 API Response Types
+export interface IPOV2Response {
+  id: string
+  stock_id: string
+  name: string
+  logo_url?: string
+  status: string
+  category: string
+  price_band_low?: number
+  price_band_high?: number
+  min_qty?: number
+  min_investment?: number
+  issue_size?: string
+  registrar: string
+  open_date?: string
+  close_date?: string
+  allotment_date?: string
+  listing_date?: string
+  description?: string
+  subscription_status?: string
+  financials?: IPOFinancial[]
+  categories?: IPOCategory[]
+  faqs?: IPOFAQ[]
+  gmp?: {
+    value?: number
+    gain_percent?: number
+    estimated_listing?: number
+    subscription_status?: string
+  }
 }

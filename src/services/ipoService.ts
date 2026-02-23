@@ -73,24 +73,14 @@ const getGMPHistoryRows = (payload: GMPHistoryResponse | GMPHistoryRawPoint[] | 
 
 // IPO Service - All IPO-related API calls
 export const ipoService = {
-  // Get all IPOs with optional filters
+  // Get all IPOs with optional filters - now uses V2
   async getIPOs(params?: { status?: string; page?: number; limit?: number }): Promise<DisplayIPO[]> {
-    const query = new URLSearchParams()
-    if (params?.status && params.status !== 'all') {
-      query.append('status', params.status)
-    }
-    
-    const queryString = query.toString()
-    const endpoint = `/v1/ipos${queryString ? `?${queryString}` : ''}`
-    
-    const response = await apiClient.get<{ data: IPO[], success: boolean }>(endpoint)
-    return transformIPOList(response.data.data || [])
+    return this.getFeedV2({ status: params?.status, limit: params?.limit, offset: params?.page ? (params.page - 1) * (params.limit || 50) : undefined })
   },
 
-  // Get active IPOs with GMP data (recommended for main feed)
+  // Get active IPOs with GMP data - now uses V2
   async getActiveIPOsWithGMP(): Promise<DisplayIPO[]> {
-    const response = await apiClient.get<{ data: IPOWithGMP[], success: boolean }>('/v1/ipos/active-with-gmp')
-    return transformIPOList(response.data.data || [])
+    return this.getFeedV2({ status: 'all' })
   },
 
   // Get IPO feed with V2 API (optimized, reduced payload)
@@ -118,16 +108,14 @@ export const ipoService = {
     return transformIPOListV2(response.data.data || [])
   },
 
-  // Get active IPOs only
+  // Get active IPOs only - now uses V2
   async getActiveIPOs(): Promise<DisplayIPO[]> {
-    const response = await apiClient.get<{ data: IPO[], success: boolean }>('/v1/ipos/active')
-    return transformIPOList(response.data.data || [])
+    return this.getFeedV2({ status: 'live' })
   },
 
-  // Get single IPO by ID
+  // Get single IPO by ID - now uses V2
   async getIPOById(id: string): Promise<DisplayIPO> {
-    const response = await apiClient.get<{ data: IPO, success: boolean }>(`/v1/ipos/${id}`)
-    return transformIPOData(response.data.data)
+    return this.getIPOByIdWithGMP(id)
   },
 
   // Get single IPO with GMP data by ID (V2 API - recommended)
@@ -136,61 +124,34 @@ export const ipoService = {
     return transformIPODataV2(response.data.data)
   },
 
-  // Get IPOs by status with filtering
+  // Get IPOs by status with filtering - now uses V2
   async getIPOsByStatus(status: 'UPCOMING' | 'LIVE' | 'CLOSED' | 'LISTED'): Promise<DisplayIPO[]> {
-    return this.getIPOs({ status: status.toLowerCase() })
+    return this.getFeedV2({ status: status.toLowerCase() })
   },
 
-  // Get live/ongoing IPOs (alias for active)
+  // Get live/ongoing IPOs - now uses V2
   async getLiveIPOs(): Promise<DisplayIPO[]> {
-    return this.getActiveIPOs()
+    return this.getFeedV2({ status: 'live' })
   },
 
-  // Get upcoming IPOs
+  // Get upcoming IPOs - now uses V2
   async getUpcomingIPOs(): Promise<DisplayIPO[]> {
-    return this.getIPOsByStatus('UPCOMING')
+    return this.getFeedV2({ status: 'upcoming' })
   },
 
-  // Get closed IPOs (allotment pending or done)
+  // Get closed IPOs (allotment pending or done) - now uses V2
   async getClosedIPOs(): Promise<DisplayIPO[]> {
-    return this.getIPOsByStatus('CLOSED')
+    return this.getFeedV2({ status: 'closed' })
   },
 
-  // Get listed IPOs
+  // Get listed IPOs - now uses V2
   async getListedIPOs(): Promise<DisplayIPO[]> {
-    return this.getIPOsByStatus('LISTED')
+    return this.getFeedV2({ status: 'listed' })
   },
 
-  // Check allotment status
+  // Check allotment status - now uses V2
   async checkAllotment(ipoId: string, pan: string): Promise<AllotmentResult> {
-    const response = await apiClient.post<{
-      data: {
-        status: string
-        ipo_id: string
-        pan_hash: string
-        shares_allotted: number
-        application_number: string
-        timestamp: string
-      }
-      success: boolean
-    }>('/v1/check', { 
-      ipo_id: ipoId, 
-      pan 
-    })
-    
-    // Transform backend response to frontend format
-    const data = response.data.data
-    return {
-      status: mapAllotmentStatus(data.status),
-      ipoId: data.ipo_id,
-      ipoName: '', // You might need to fetch this separately
-      pan: data.pan_hash, // Note: backend returns hashed PAN
-      sharesApplied: 0, // Not available in backend response
-      sharesAllotted: data.shares_allotted,
-      applicationNumber: data.application_number,
-      message: data.status,
-      checkedAt: data.timestamp
-    }
+    return this.checkAllotmentV2(ipoId, pan)
   },
 
   // Check allotment status with V2 API (reduced response)
@@ -227,29 +188,20 @@ export const ipoService = {
     return transformMarketIndices(response.data)
   },
 
-  // Get IPO GMP data separately (if needed)
+  // Get IPO GMP data separately (if needed) - uses V2 detail which includes GMP
   async getIPOGMP(ipoId: string) {
-    const response = await apiClient.get<{
-      data: {
-        gmp_value: number
-        estimated_listing: number
-        gain_percent: number
-      }
-      success: boolean
-    }>(`/v1/ipos/${ipoId}/gmp`)
-    
-    const data = response.data.data
+    const ipo = await this.getIPOByIdWithGMP(ipoId)
     return {
-      gmp: data.gmp_value,
-      expectedListing: data.estimated_listing,
-      gainPercent: data.gain_percent
+      gmp: ipo.gmp?.value,
+      expectedListing: ipo.gmp?.estimatedListing,
+      gainPercent: ipo.gmp?.gainPercent
     }
   },
 
-  // Get GMP history for charting
+  // Get GMP history for charting - uses V2 endpoint
   async getGMPHistory(stockId: string): Promise<GMPHistoryPoint[]> {
     const response = await apiClient.get<{ data: GMPHistoryResponse | GMPHistoryRawPoint[]; success: boolean }>(
-      `/v1/gmp/history/${stockId}/chart`
+      `/v2/gmp/history/${stockId}/chart`
     )
 
     const rows = getGMPHistoryRows(response.data.data)

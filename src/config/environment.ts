@@ -11,13 +11,13 @@ export const getApiBaseUrl = () => {
   
   if (Platform.OS === 'android') {
     // For Android emulator, use 10.0.2.2 to access host machine
-    return 'http://10.0.2.2:8080/api/v1'
+    return 'http://10.0.2.2:8080/api'
   } else if (Platform.OS === 'ios') {
     // For iOS simulator, localhost works
-    return 'http://localhost:8080/api/v1'
+    return 'http://localhost:8080/api'
   } else {
     // For web or other platforms
-    return 'http://localhost:8080/api/v1'
+    return 'http://localhost:8080/api'
   }
 }
 

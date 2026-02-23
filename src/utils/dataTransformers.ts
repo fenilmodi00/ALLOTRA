@@ -1,4 +1,4 @@
-import { IPO, IPOWithGMP, DisplayIPO, MarketIndex, MarketIndicesAPIResponse } from '../types'
+import { IPO, IPOWithGMP, DisplayIPO, MarketIndex, MarketIndicesAPIResponse, IPOV2Response } from '../types'
 import type { IPOStatus } from '../types'
 
 /**
@@ -84,6 +84,68 @@ export const transformIPOData = (ipo: IPO | IPOWithGMP): DisplayIPO => {
 }
 
 /**
+ * Transform V2 API response to frontend display format
+ */
+export const transformIPODataV2 = (ipo: IPOV2Response): DisplayIPO => {
+  if (!ipo) {
+    console.warn('⚠️ transformIPODataV2 received null/undefined IPO data')
+    throw new Error('Invalid IPO data')
+  }
+
+  const category = (ipo.category === 'sme' ? 'sme' : 'mainboard') as 'mainboard' | 'sme'
+
+  const transformed: DisplayIPO = {
+    id: ipo.id || '',
+    stockId: ipo.stock_id || undefined,
+    name: ipo.name || 'Unknown IPO',
+    companyName: ipo.name || 'Unknown Company',
+    companyCode: '',
+    symbol: undefined,
+    priceRange: {
+      min: ipo.price_band_low || 0,
+      max: ipo.price_band_high || 0,
+    },
+    status: normalizeIPOStatus(ipo.status),
+    dates: {
+      open: ipo.open_date || undefined,
+      close: ipo.close_date || undefined,
+      allotment: ipo.allotment_date || undefined,
+      listing: ipo.listing_date || undefined,
+    },
+    lotSize: ipo.min_qty || 0,
+    minInvestment: ipo.min_investment || 0,
+    registrar: ipo.registrar || 'Unknown',
+    logoUrl: ipo.logo_url || undefined,
+    category,
+    issueSize: ipo.issue_size || undefined,
+    subscriptionStatus: ipo.subscription_status || undefined,
+    listingGain: undefined,
+    description: ipo.description || undefined,
+    about: ipo.description || undefined,
+    strengths: [],
+    risks: [],
+    financials: ipo.financials || undefined,
+    categories: ipo.categories || undefined,
+    faqs: ipo.faqs || undefined,
+  }
+
+  // Add GMP data if available
+  if (ipo.gmp) {
+    transformed.gmp = {
+      value: ipo.gmp.value,
+      gainPercent: ipo.gmp.gain_percent,
+      estimatedListing: ipo.gmp.estimated_listing,
+      lastUpdated: undefined,
+      subscriptionStatus: ipo.gmp.subscription_status,
+      listingGain: undefined,
+      dataSource: undefined,
+    }
+  }
+
+  return transformed
+}
+
+/**
  * Transform array of IPO data
  */
 export const transformIPOList = (ipos: (IPO | IPOWithGMP)[] | null | undefined): DisplayIPO[] => {
@@ -92,6 +154,17 @@ export const transformIPOList = (ipos: (IPO | IPOWithGMP)[] | null | undefined):
     return []
   }
   return ipos.map(transformIPOData)
+}
+
+/**
+ * Transform V2 API IPO list response
+ */
+export const transformIPOListV2 = (ipos: IPOV2Response[] | null | undefined): DisplayIPO[] => {
+  if (!ipos || !Array.isArray(ipos)) {
+    console.warn('⚠️ transformIPOListV2 received invalid data:', ipos)
+    return []
+  }
+  return ipos.map(transformIPODataV2)
 }
 
 /**
