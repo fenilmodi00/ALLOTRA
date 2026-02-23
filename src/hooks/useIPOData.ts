@@ -181,7 +181,6 @@ export const useMarketIndices = (autoRefresh = true) => {
     const interval = setInterval(() => {
       void fetchIndices(true)
     }, 60000)
-
     return () => clearInterval(interval)
   }, [autoRefresh, fetchIndices])
 

@@ -100,6 +100,8 @@ export const IPOCard = memo(function IPOCard({
   onPress,
 }: IPOCardProps) {
   const statusConfig = useMemo(() => getStatusConfig(ipo.status), [ipo.status])
+  const isGmpPositive = (ipo.gmp?.value ?? 0) >= 0
+  const gmpSign = isGmpPositive ? '+' : '-'
   
   const priceRange = useMemo(() => {
     if (ipo.priceRange.min && ipo.priceRange.max) {
@@ -183,16 +185,16 @@ export const IPOCard = memo(function IPOCard({
               GMP
             </Text>
             {/* Roboto SemiBold 13px value - matches Figma font-['Roboto:SemiBold'] */}
-            <Text 
-              style={{
-                fontSize: 13,
-                fontWeight: '600',
-                color: (ipo.gmp.value ?? 0) >= 0 ? growwColors.success : growwColors.error,
-              }}
-            >
-              {((ipo.gmp.value ?? 0) >= 0 ? '+' : '')}₹{ipo.gmp.value}
-            </Text>
-          </VStack>
+              <Text 
+                style={{
+                  fontSize: 13,
+                  fontWeight: '600',
+                  color: isGmpPositive ? growwColors.success : growwColors.error,
+                }}
+              >
+                {gmpSign}₹{Math.abs(ipo.gmp.value)}
+              </Text>
+            </VStack>
           
           {ipo.gmp.gainPercent !== undefined && (
             <VStack style={{ alignItems: 'flex-end' }}>
@@ -203,13 +205,10 @@ export const IPOCard = memo(function IPOCard({
                 style={{
                   fontSize: 13,
                   fontWeight: '600',
-                  color: (ipo.gmp.gainPercent ?? 0) >= 0 ? growwColors.success : growwColors.error,
+                  color: isGmpPositive ? growwColors.success : growwColors.error,
                 }}
               >
-                {(() => {
-                  const gainPercent = ipo.gmp.gainPercent ?? 0
-                  return `${gainPercent.toFixed(2)}%`
-                })()}
+                {Math.abs(ipo.gmp.gainPercent).toFixed(2)}%
               </Text>
             </VStack>
           )}

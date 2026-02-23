@@ -67,7 +67,9 @@ const createAbortController = (timeout: number): AbortController => {
 export const apiClient = {
   async request<T>(endpoint: string, options: RequestOptions = {}): Promise<APIResponse<T>> {
     const { method = 'GET', body, headers = {}, timeout = API_CONFIG.timeout } = options
-    const url = `${API_CONFIG.baseURL}${endpoint}`
+    const url = endpoint.startsWith('http://') || endpoint.startsWith('https://')
+      ? endpoint
+      : `${API_CONFIG.baseURL}${endpoint}`
     
     devLog(`🌐 API Request: ${method} ${url}`)
 

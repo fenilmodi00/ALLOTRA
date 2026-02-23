@@ -49,6 +49,7 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
   }
 
   const statusInfo = getStatusInfo(ipo.status)
+  const isGmpPositive = (ipo.gmp?.value ?? 0) >= 0
   const now = new Date()
   const openDate = ipo.dates.open ? new Date(ipo.dates.open) : null
   const closeDate = ipo.dates.close ? new Date(ipo.dates.close) : null
@@ -167,11 +168,8 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
               {ipo.gmp.gainPercent !== undefined && (
                 <View style={rowStyle}>
                   <Text style={{ color: growwColors.textSecondary, fontSize: 14 }}>Expected Gain</Text>
-                  <Text style={{ color: (ipo.gmp.gainPercent ?? 0) >= 0 ? growwColors.success : growwColors.error, fontSize: 14, fontWeight: '600' }}>
-                    {(() => {
-                      const gainPercent = ipo.gmp.gainPercent ?? 0
-                      return `${gainPercent.toFixed(2)}%`
-                    })()}
+                  <Text style={{ color: isGmpPositive ? growwColors.success : growwColors.error, fontSize: 14, fontWeight: '600' }}>
+                    {Math.abs(ipo.gmp.gainPercent).toFixed(2)}%
                   </Text>
                 </View>
               )}

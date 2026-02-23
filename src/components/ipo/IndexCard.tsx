@@ -87,6 +87,8 @@ export const IndexCard = memo(function IndexCard({
 }: IndexCardProps) {
   const prevFormattedRef = useRef<string | null>(null)
 
+  const isPositiveByChange = change === 0 ? isPositive : change > 0
+
   const formattedValue = useMemo(
     () => value.toLocaleString('en-IN', { maximumFractionDigits: 2 }),
     [value]
@@ -100,22 +102,22 @@ export const IndexCard = memo(function IndexCard({
   }, [formattedValue])
 
   const formattedChange = useMemo(() => {
-    const sign = isPositive ? '+' : ''
+    const sign = isPositiveByChange ? '+' : '-'
     return `${sign}${Math.abs(change).toFixed(2)}`
-  }, [change, isPositive])
+  }, [change, isPositiveByChange])
 
   const formattedPercent = useMemo(
-    () => `(${isPositive ? '+' : ''}${Math.abs(changePercent).toFixed(2)}%)`,
-    [changePercent, isPositive]
+    () => `(${Math.abs(changePercent).toFixed(2)}%)`,
+    [changePercent]
   )
 
-  const changeColor = isPositive ? growwColors.success : growwColors.error
+  const changeColor = isPositiveByChange ? growwColors.success : growwColors.error
 
   return (
     <Box
       style={styles.card}
       accessibilityRole="text"
-      accessibilityLabel={`${indexName}, ${formattedValue}, ${isPositive ? 'up' : 'down'} ${formatPercentage(changePercent)}`}
+      accessibilityLabel={`${indexName}, ${value.toFixed(2)}, ${isPositiveByChange ? 'up' : 'down'} ${formatPercentage(changePercent)}`}
     >
       <VStack style={styles.content}>
         {/* Index name — never changes, zero re-render cost */}
@@ -130,7 +132,7 @@ export const IndexCard = memo(function IndexCard({
             {prefix}
             <AnimatedSuffix
               suffix={suffix}
-              isPositive={isPositive}
+              isPositive={isPositiveByChange}
               style={styles.indexValue}
             />
           </Text>
@@ -138,7 +140,7 @@ export const IndexCard = memo(function IndexCard({
           {/* Change and percent — animate together as one unit */}
           <AnimatedSuffix
             suffix={`  ${formattedChange} ${formattedPercent}`}
-            isPositive={isPositive}
+            isPositive={isPositiveByChange}
             style={[styles.changeValue, { color: changeColor }]}
           />
         </Box>

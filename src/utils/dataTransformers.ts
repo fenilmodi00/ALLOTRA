@@ -1,4 +1,4 @@
-import { IPO, IPOWithGMP, DisplayIPO } from '../types'
+import { IPO, IPOWithGMP, DisplayIPO, MarketIndex, MarketIndicesAPIResponse } from '../types'
 import type { IPOStatus } from '../types'
 
 /**
@@ -198,4 +198,34 @@ export const getDaysRemaining = (closeDate?: string): number | null => {
   } catch {
     return null
   }
+}
+
+const parseChangePercent = (value: string): number => {
+  const parsed = Number.parseFloat(value.replace('%', ''))
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+/**
+ * Transform Cloudflare market indices response to app format
+ */
+export const transformMarketIndices = (payload: MarketIndicesAPIResponse): MarketIndex[] => {
+  const entries: Array<[string, keyof MarketIndicesAPIResponse]> = [
+    ['nifty50', 'nifty50'],
+    ['sensex', 'sensex'],
+    ['banknifty', 'banknifty'],
+    ['niftymidcap', 'niftymidcap'],
+  ]
+
+  return entries.map(([id, key]) => {
+    const item = payload[key]
+
+    return {
+      id,
+      name: item.symbol,
+      value: item.price,
+      change: item.change,
+      change_percent: parseChangePercent(item.changePercent),
+      is_positive: item.isPositive,
+    }
+  })
 }

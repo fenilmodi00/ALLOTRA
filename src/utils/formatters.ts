@@ -88,8 +88,8 @@ export const formatGMP = (gmpValue?: number): string => {
   if (gmpValue === undefined || gmpValue === null) return 'No GMP'
   if (gmpValue === 0) return 'At Par'
   
-  const sign = gmpValue > 0 ? '+' : ''
-  return `${sign}${formatCurrency(gmpValue)}`
+  const sign = gmpValue > 0 ? '+' : '-'
+  return `${sign}${formatCurrency(Math.abs(gmpValue))}`
 }
 
 // Format subscription status

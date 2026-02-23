@@ -9,9 +9,12 @@ import type {
   GMPHistoryPoint,
   GMPHistoryRawPoint,
   GMPHistoryResponse,
+  MarketIndicesAPIResponse,
 } from '../types'
-import { transformIPOData, transformIPOList } from '../utils/dataTransformers'
+import { transformIPOData, transformIPOList, transformMarketIndices } from '../utils/dataTransformers'
 import { mapAllotmentStatus } from './mappers/allotmentMapper'
+
+const MARKET_INDICES_URL = 'https://nifty-proxy.feniluvpce.workers.dev/all'
 
 const normalizeGMPHistory = (rows: GMPHistoryRawPoint[]): GMPHistoryPoint[] => {
   return rows
@@ -166,8 +169,8 @@ export const ipoService = {
 
   // Get market indices
   async getMarketIndices(): Promise<MarketIndex[]> {
-    const response = await apiClient.get<{ data: MarketIndex[], success: boolean }>('/market/indices')
-    return response.data.data || []
+    const response = await apiClient.get<MarketIndicesAPIResponse>(MARKET_INDICES_URL)
+    return transformMarketIndices(response.data)
   },
 
   // Get IPO GMP data separately (if needed)

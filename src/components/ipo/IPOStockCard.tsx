@@ -100,9 +100,10 @@ export const IPOStockCard = memo(function IPOStockCard({
   const gmpDisplay = useMemo(() => {
     if (ipo.gmp && ipo.gmp.value !== undefined) {
       const isPositive = ipo.gmp.value >= 0
-      const gainPercent = ipo.gmp.gainPercent ?? 0
+      const gainPercent = ipo.gmp.gainPercent || 0
+      const sign = isPositive ? '+' : '-'
       return {
-        text: `${isPositive ? '+' : ''}₹${Math.abs(ipo.gmp.value)} (${gainPercent.toFixed(1)}%)`,
+        text: `${sign}₹${Math.abs(ipo.gmp.value)} (${Math.abs(gainPercent).toFixed(1)}%)`,
         isPositive
       }
     }

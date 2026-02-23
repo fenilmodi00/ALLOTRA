@@ -140,6 +140,23 @@ export interface MarketIndex {
   is_positive: boolean
 }
 
+export interface MarketIndexAPIItem {
+  symbol: string
+  price: number
+  change: number
+  changePercent: string
+  isPositive: boolean
+  timestamp: string
+  cached: boolean
+}
+
+export interface MarketIndicesAPIResponse {
+  nifty50: MarketIndexAPIItem
+  sensex: MarketIndexAPIItem
+  banknifty: MarketIndexAPIItem
+  niftymidcap: MarketIndexAPIItem
+}
+
 // Allotment Check Result
 export interface AllotmentResult {
   status: AllotmentStatus
