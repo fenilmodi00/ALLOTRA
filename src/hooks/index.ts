@@ -10,10 +10,4 @@ export {
   useCacheWarmup 
 } from './useIPOData'
 export { useIPOFiltering } from './useIPOFiltering'
-export { 
-  useMostTradedStocks, 
-  useGainersLosers, 
-  useStockSearch, 
-  useStockDetails 
-} from './useStockData'
 export { useGMPHistory } from './useGMPHistory'

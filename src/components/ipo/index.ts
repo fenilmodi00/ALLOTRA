@@ -2,6 +2,6 @@
 
 export { IPOCard } from './IPOCard'
 export { IPOStockCard } from './IPOStockCard'
+export { IPOStockCardSkeleton } from './IPOStockCardSkeleton'
 export { IPOSection } from './IPOSection'
-export { StockCard } from './StockCard'
 export { IndexCard } from './IndexCard'

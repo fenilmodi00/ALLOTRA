@@ -1,53 +1,69 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useIPOStore } from '../store/useIPOStore'
 import { ipoService } from '../services/ipoService'
-import type { DisplayIPO, AllotmentResult, IPOStatus } from '../types'
+import type { DisplayIPO, AllotmentResult, IPOStatus, MarketIndex } from '../types'
 import { devError, devLog } from '../utils/logger'
 import { ipoRepository } from '../repositories/ipoRepository'
+import { cacheWrite, cacheReadStale, CACHE_KEYS } from '../utils/asyncStorageCache'
+
+// Derive the cache key that corresponds to a given status + includeGMP combo
+function ipoListCacheKey(status: IPOStatus | 'all', includeGMP: boolean): string {
+  if ((status === 'all' || status === 'LIVE') && includeGMP) return CACHE_KEYS.IPO_ACTIVE_FEED
+  if (status === 'UPCOMING') return CACHE_KEYS.IPO_UPCOMING
+  if (status === 'CLOSED') return CACHE_KEYS.IPO_CLOSED
+  if (status === 'LISTED') return CACHE_KEYS.IPO_LISTED
+  return CACHE_KEYS.IPO_ACTIVE_FEED
+}
 
 // Hook for fetching and managing IPO list with enhanced features
 export const useIPOList = (status: IPOStatus | 'all' = 'all', includeGMP = true) => {
   const { ipos, loading, error, setIPOs, setLoading, setError, clearError } = useIPOStore()
   const [refreshing, setRefreshing] = useState(false)
+  const seededFromCache = useRef(false)
+
+  // Seed from cache on first mount so the UI has something to show instantly
+  useEffect(() => {
+    if (seededFromCache.current) return
+    seededFromCache.current = true
+
+    const cached = cacheReadStale<DisplayIPO[]>(ipoListCacheKey(status, includeGMP))
+    if (cached && cached.length > 0) {
+      // Only seed when the store is still empty to avoid overwriting a
+      // completed fresh fetch that may have beaten the cache read.
+      if (useIPOStore.getState().ipos.length === 0) {
+        devLog('📦 Seeding IPO list from cache:', { count: cached.length })
+        setIPOs(cached)
+      }
+    }
+  // Run once on mount — intentionally no deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const fetchIPOs = useCallback(async (isRefresh = false) => {
     if (isRefresh) {
       setRefreshing(true)
     } else {
-      setLoading(true)
+      // Only show the loading spinner when we have no data at all
+      if (useIPOStore.getState().ipos.length === 0) {
+        setLoading(true)
+      }
     }
     clearError()
     
     try {
       let data: DisplayIPO[]
 
-      // Use the most appropriate endpoint
-      if (status === 'all' && includeGMP) {
-        data = await ipoRepository.getActiveFeed()
-        devLog('📊 Fetched active IPOs with GMP:', { count: data.length })
-      } else if (status === 'LIVE') {
-        data = includeGMP 
-          ? await ipoRepository.getActiveFeed()
-          : await ipoService.getActiveIPOs()
-        devLog('📊 Fetched live IPOs:', { count: data.length })
-      } else if (status === 'UPCOMING') {
-        data = await ipoService.getUpcomingIPOs()
-        devLog('📊 Fetched upcoming IPOs:', { count: data.length })
-      } else if (status === 'CLOSED') {
-        data = await ipoService.getClosedIPOs()
-        devLog('📊 Fetched closed IPOs:', { count: data.length })
-      } else if (status === 'LISTED') {
-        data = await ipoService.getListedIPOs()
-        devLog('📊 Fetched listed IPOs:', { count: data.length })
+      // V2: Use optimized feed endpoint for all cases
+      if (status === 'all' || status === 'LIVE') {
+        data = await ipoRepository.getFeed(status === 'all' ? 'all' : 'live')
+      } else if (status === 'UPCOMING' || status === 'CLOSED' || status === 'LISTED') {
+        data = await ipoRepository.getFeed(status.toLowerCase())
       } else {
-        // For any other status or 'all', use the general endpoint
-        data = await ipoService.getIPOs({ status: status === 'all' ? undefined : status })
-        devLog('📊 Fetched general IPOs:', { count: data.length })
+        data = await ipoRepository.getFeed()
       }
 
-      // Log sample data for debugging (only in dev)
       if (__DEV__ && data.length > 0) {
-        devLog('📊 Sample IPO data:', {
+        devLog('📊 Sample IPO data (V2):', {
           name: data[0].name,
           status: data[0].status,
           dates: data[0].dates,
@@ -56,6 +72,8 @@ export const useIPOList = (status: IPOStatus | 'all' = 'all', includeGMP = true)
       }
 
       setIPOs(data)
+      // Persist fresh data for the next session / component re-mount
+      cacheWrite(ipoListCacheKey(status, includeGMP), data)
     } catch (err) {
       devError('❌ Failed to fetch IPOs:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch IPOs')
@@ -127,7 +145,8 @@ export const useAllotmentCheck = () => {
     setResult(null)
     
     try {
-      const data = await ipoService.checkAllotment(ipoId, pan)
+      // V2: Use optimized endpoint
+      const data = await ipoRepository.checkAllotment(ipoId, pan)
       setResult(data)
       addRecentCheck(data)
     } catch (err) {
@@ -148,11 +167,30 @@ export const useAllotmentCheck = () => {
 // Hook for market indices with auto-refresh
 export const useMarketIndices = (autoRefresh = true) => {
   const { indices, setIndices } = useIPOStore()
+  const seededFromCache = useRef(false)
   const [loading, setLoading] = useState(indices.length === 0)
   const [error, setError] = useState<string | null>(null)
 
+  // Seed from cache synchronously on first mount
+  useEffect(() => {
+    if (seededFromCache.current) return
+    seededFromCache.current = true
+
+    if (useIPOStore.getState().indices.length === 0) {
+      const cached = cacheReadStale<MarketIndex[]>(CACHE_KEYS.MARKET_INDICES)
+      if (cached && cached.length > 0) {
+        devLog('📦 Seeding market indices from cache:', { count: cached.length })
+        setIndices(cached)
+        // We have stale data — no need to show the loading skeleton
+        setLoading(false)
+      }
+    }
+  // Run once on mount — intentionally no deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const fetchIndices = useCallback(async (isBackgroundRefresh = false) => {
-    const shouldShowInitialLoader = !isBackgroundRefresh && indices.length === 0
+    const shouldShowInitialLoader = !isBackgroundRefresh && useIPOStore.getState().indices.length === 0
 
     if (shouldShowInitialLoader) {
       setLoading(true)
@@ -161,6 +199,7 @@ export const useMarketIndices = (autoRefresh = true) => {
     try {
       const data = await ipoService.getMarketIndices()
       setIndices(data)
+      cacheWrite(CACHE_KEYS.MARKET_INDICES, data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch indices')
     } finally {
@@ -168,7 +207,7 @@ export const useMarketIndices = (autoRefresh = true) => {
         setLoading(false)
       }
     }
-  }, [indices.length, setIndices])
+  }, [setIndices])
 
   useEffect(() => {
     void fetchIndices()
