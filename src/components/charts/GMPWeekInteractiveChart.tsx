@@ -34,8 +34,7 @@ const formatSignedChange = (value: number): string => {
 }
 
 const formatPercent = (value: number): string => {
-  const sign = value >= 0 ? '+' : ''
-  return `${sign}${value.toFixed(2)}%`
+  return `${value.toFixed(2)}%`
 }
 
 const formatPointValue = (value: number): string => {
@@ -71,7 +70,7 @@ export function GMPWeekInteractiveChart({ history }: GMPWeekInteractiveChartProp
   const activePoint = activeIndex === null ? null : model.points[activeIndex] || null
   const activePercent = getPointPercent(activePoint)
   const lineColor = summary.latest >= 0 ? growwColors.success : growwColors.error
-  const changeColor = summary.change >= 0 ? growwColors.success : growwColors.error
+  const changeColor = summary.latest >= 0 ? growwColors.success : growwColors.error
 
   useEffect(() => {
     if (!history.length) {

@@ -14,8 +14,8 @@ interface IPOCardProps {
   onPress?: () => void
 }
 
-const getStatusConfig = (status: DisplayIPO['status']) => {
-  switch (status) {
+const getStatusConfig = (status: string) => {
+  switch (status.toUpperCase()) {
     case 'LIVE':
       return { color: growwColors.ipoLive, bg: growwColors.ipoLiveBg, label: 'LIVE' }
     case 'UPCOMING':
@@ -187,10 +187,10 @@ export const IPOCard = memo(function IPOCard({
               style={{
                 fontSize: 13,
                 fontWeight: '600',
-                color: ipo.gmp.value >= 0 ? growwColors.success : growwColors.error,
+                color: (ipo.gmp.value ?? 0) >= 0 ? growwColors.success : growwColors.error,
               }}
             >
-              {ipo.gmp.value >= 0 ? '+' : ''}₹{ipo.gmp.value}
+              {((ipo.gmp.value ?? 0) >= 0 ? '+' : '')}₹{ipo.gmp.value}
             </Text>
           </VStack>
           
@@ -203,10 +203,13 @@ export const IPOCard = memo(function IPOCard({
                 style={{
                   fontSize: 13,
                   fontWeight: '600',
-                  color: ipo.gmp.gainPercent >= 0 ? growwColors.success : growwColors.error,
+                  color: (ipo.gmp.gainPercent ?? 0) >= 0 ? growwColors.success : growwColors.error,
                 }}
               >
-                {ipo.gmp.gainPercent >= 0 ? '+' : ''}{ipo.gmp.gainPercent.toFixed(2)}%
+                {(() => {
+                  const gainPercent = ipo.gmp.gainPercent ?? 0
+                  return `${gainPercent.toFixed(2)}%`
+                })()}
               </Text>
             </VStack>
           )}

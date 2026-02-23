@@ -148,11 +148,15 @@ export const useAllotmentCheck = () => {
 // Hook for market indices with auto-refresh
 export const useMarketIndices = (autoRefresh = true) => {
   const { indices, setIndices } = useIPOStore()
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(indices.length === 0)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchIndices = useCallback(async () => {
-    setLoading(true)
+  const fetchIndices = useCallback(async (isBackgroundRefresh = false) => {
+    const shouldShowInitialLoader = !isBackgroundRefresh && indices.length === 0
+
+    if (shouldShowInitialLoader) {
+      setLoading(true)
+    }
     
     try {
       const data = await ipoService.getMarketIndices()
@@ -160,19 +164,24 @@ export const useMarketIndices = (autoRefresh = true) => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch indices')
     } finally {
-      setLoading(false)
+      if (shouldShowInitialLoader) {
+        setLoading(false)
+      }
     }
-  }, [setIndices])
+  }, [indices.length, setIndices])
 
   useEffect(() => {
-    fetchIndices()
+    void fetchIndices()
   }, [fetchIndices])
 
-  // Auto refresh every 30 seconds
+  // Auto refresh every minute without toggling loading skeletons
   useEffect(() => {
     if (!autoRefresh) return
 
-    const interval = setInterval(fetchIndices, 30000)
+    const interval = setInterval(() => {
+      void fetchIndices(true)
+    }, 60000)
+
     return () => clearInterval(interval)
   }, [autoRefresh, fetchIndices])
 

@@ -10,7 +10,6 @@ import Animated, {
 import { Box } from '@/components/ui/box'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
-import { Badge, BadgeText } from '@/components/ui/badge'
 import { growwColors } from '../../design-system/tokens/colors'
 import type { DisplayIPO } from '../../types'
 
@@ -101,9 +100,9 @@ export const IPOStockCard = memo(function IPOStockCard({
   const gmpDisplay = useMemo(() => {
     if (ipo.gmp && ipo.gmp.value !== undefined) {
       const isPositive = ipo.gmp.value >= 0
-      const gainPercent = ipo.gmp.gainPercent || 0
+      const gainPercent = ipo.gmp.gainPercent ?? 0
       return {
-        text: `${isPositive ? '+' : ''}₹${Math.abs(ipo.gmp.value)} (${isPositive ? '+' : ''}${gainPercent.toFixed(1)}%)`,
+        text: `${isPositive ? '+' : ''}₹${Math.abs(ipo.gmp.value)} (${gainPercent.toFixed(1)}%)`,
         isPositive
       }
     }
@@ -111,18 +110,19 @@ export const IPOStockCard = memo(function IPOStockCard({
   }, [ipo.gmp])
 
   const statusConfig = useMemo(() => {
-    switch (ipo.status) {
+    switch (ipo.status.toUpperCase()) {
       case 'LIVE':
-        return { action: 'success' as const, label: 'LIVE', hasDot: true, dotColor: '#22c55e', isBlinking: true }
-      case 'UPCOMING':
+        return { label: 'LIVE', hasDot: true, dotColor: '#22c55e', isBlinking: true, bgColor: '#dcfce7', textColor: '#16a34a' }
+      case 'UPCOMING': {
         const daysUntil = getDaysUntilOpen()
-        return { action: 'warning' as const, label: daysUntil || 'UPCOMING', hasDot: true, dotColor: '#eab308', isBlinking: false }
+        return { label: daysUntil || 'UPCOMING', hasDot: true, dotColor: '#eab308', isBlinking: false, bgColor: '#fef9c3', textColor: '#a16207' }
+      }
       case 'CLOSED':
-        return { action: 'error' as const, label: 'CLOSED', hasDot: true, dotColor: '#ea580c', isBlinking: false }
+        return { label: 'CLOSED', hasDot: true, dotColor: '#ea580c', isBlinking: false, bgColor: '#fee2e2', textColor: '#dc2626' }
       case 'LISTED':
-        return { action: 'info' as const, label: 'LISTED', hasDot: true, dotColor: '#3b82f6', isBlinking: false }
+        return { label: 'LISTED', hasDot: true, dotColor: '#3b82f6', isBlinking: false, bgColor: '#dbeafe', textColor: '#2563eb' }
       default:
-        return { action: 'muted' as const, label: ipo.status, hasDot: false, dotColor: '#6b7280', isBlinking: false }
+        return { label: ipo.status, hasDot: false, dotColor: '#6b7280', isBlinking: false, bgColor: '#f3f4f6', textColor: '#6b7280' }
     }
   }, [ipo.status, ipo.dates])
 
@@ -219,9 +219,16 @@ export const IPOStockCard = memo(function IPOStockCard({
             }, dotAnimatedStyle]} />
           </Box>
         )}
-        <Badge action={statusConfig.action} variant="solid" size="sm">
-          <BadgeText bold>{statusConfig.label}</BadgeText>
-        </Badge>
+        <Animated.View style={{
+          backgroundColor: statusConfig.bgColor,
+          borderRadius: 4,
+          paddingHorizontal: 6,
+          paddingVertical: 2,
+        }}>
+          <Text style={{ fontSize: 10, fontWeight: '700', color: statusConfig.textColor, letterSpacing: 0.3 }}>
+            {statusConfig.label}
+          </Text>
+        </Animated.View>
       </Animated.View>
 
       {/* Logo — Figma: left:14 top:13, 38×38, borderRadius:12 */}

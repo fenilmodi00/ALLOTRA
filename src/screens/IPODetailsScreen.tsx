@@ -125,7 +125,7 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={{ backgroundColor: 'white', padding: 20, marginBottom: 8 }}>
           <View style={{ ...rowStyle, alignItems: 'flex-start' }}>
-            <View>
+            <View style={{ flex: 1, minWidth: 0, marginRight: 12 }}>
               <View
                 style={{
                   width: 48,
@@ -148,7 +148,7 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
                 {ipo.category === 'sme' ? 'SME' : 'Mainboard'} - {ipo.registrar}
               </Text>
             </View>
-            <View style={{ backgroundColor: statusInfo.bgColor, borderRadius: 4, paddingHorizontal: 8, paddingVertical: 4 }}>
+            <View style={{ backgroundColor: statusInfo.bgColor, borderRadius: 4, paddingHorizontal: 8, paddingVertical: 4, alignSelf: 'flex-start' }}>
               <Text style={{ color: statusInfo.color, fontSize: 12, fontWeight: '600' }}>{statusInfo.text}</Text>
             </View>
           </View>
@@ -167,8 +167,11 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
               {ipo.gmp.gainPercent !== undefined && (
                 <View style={rowStyle}>
                   <Text style={{ color: growwColors.textSecondary, fontSize: 14 }}>Expected Gain</Text>
-                  <Text style={{ color: ipo.gmp.gainPercent >= 0 ? growwColors.success : growwColors.error, fontSize: 14, fontWeight: '600' }}>
-                    {ipo.gmp.gainPercent >= 0 ? '+' : ''}{ipo.gmp.gainPercent.toFixed(2)}%
+                  <Text style={{ color: (ipo.gmp.gainPercent ?? 0) >= 0 ? growwColors.success : growwColors.error, fontSize: 14, fontWeight: '600' }}>
+                    {(() => {
+                      const gainPercent = ipo.gmp.gainPercent ?? 0
+                      return `${gainPercent.toFixed(2)}%`
+                    })()}
                   </Text>
                 </View>
               )}

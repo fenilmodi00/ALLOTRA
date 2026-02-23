@@ -1,6 +1,16 @@
 import { create } from 'zustand'
 import type { DisplayIPO, MarketIndex, AllotmentResult } from '../types'
 
+const hasIndexValueChanged = (current: MarketIndex, next: MarketIndex) => {
+  return (
+    current.name !== next.name ||
+    current.value !== next.value ||
+    current.change !== next.change ||
+    current.change_percent !== next.change_percent ||
+    current.is_positive !== next.is_positive
+  )
+}
+
 interface IPOState {
   // Data
   ipos: DisplayIPO[]
@@ -34,7 +44,40 @@ export const useIPOStore = create<IPOState>((set, get) => ({
   
   // Actions
   setIPOs: (ipos) => set({ ipos }),
-  setIndices: (indices) => set({ indices }),
+  setIndices: (indices) => set((state) => {
+    if (state.indices.length === 0) {
+      return { indices }
+    }
+
+    const previousById = new Map(state.indices.map((index) => [index.id, index]))
+
+    let hasAnyChanges = state.indices.length !== indices.length
+
+    const mergedIndices = indices.map((nextIndex) => {
+      const previousIndex = previousById.get(nextIndex.id)
+
+      if (!previousIndex) {
+        hasAnyChanges = true
+        return nextIndex
+      }
+
+      if (hasIndexValueChanged(previousIndex, nextIndex)) {
+        hasAnyChanges = true
+        return nextIndex
+      }
+
+      return previousIndex
+    })
+
+    if (!hasAnyChanges) {
+      const hasOrderChanged = mergedIndices.some((index, idx) => index !== state.indices[idx])
+      if (!hasOrderChanged) {
+        return state
+      }
+    }
+
+    return { indices: mergedIndices }
+  }),
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
   

@@ -1,4 +1,27 @@
 import { IPO, IPOWithGMP, DisplayIPO } from '../types'
+import type { IPOStatus } from '../types'
+
+/**
+ * Normalize backend status strings to canonical IPOStatus values.
+ * The backend can return 'ACTIVE' or 'ONGOING' for live IPOs.
+ */
+const normalizeIPOStatus = (status: string | undefined): IPOStatus => {
+  switch ((status || '').toUpperCase()) {
+    case 'ACTIVE':
+    case 'ONGOING':
+      return 'LIVE'
+    case 'LIVE':
+      return 'LIVE'
+    case 'UPCOMING':
+      return 'UPCOMING'
+    case 'CLOSED':
+      return 'CLOSED'
+    case 'LISTED':
+      return 'LISTED'
+    default:
+      return 'UNKNOWN'
+  }
+}
 
 /**
  * Transform backend IPO data to frontend display format
@@ -23,7 +46,7 @@ export const transformIPOData = (ipo: IPO | IPOWithGMP): DisplayIPO => {
       min: ipo.price_band_low || 0,
       max: ipo.price_band_high || 0,
     },
-    status: ipo.status || 'UNKNOWN',
+    status: normalizeIPOStatus(ipo.status),
     dates: {
       open: ipo.open_date || undefined,
       close: ipo.close_date || undefined,
@@ -144,6 +167,8 @@ export const formatIPODate = (dateString?: string): string => {
  */
 export const getStatusColor = (status: string): string => {
   switch (status.toUpperCase()) {
+    case 'ACTIVE':
+    case 'ONGOING':
     case 'LIVE':
       return '#10B981' // Green
     case 'UPCOMING':

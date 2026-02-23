@@ -130,6 +130,9 @@ export const getStatusInfo = (status: string) => {
   const statusUpper = status.toUpperCase()
   
   switch (statusUpper) {
+    case 'ACTIVE':
+    case 'ONGOING':
+      return { color: '#10B981', text: 'Active', bgColor: '#D1FAE5' }
     case 'LIVE':
       return { color: '#10B981', text: 'Live', bgColor: '#D1FAE5' }
     case 'UPCOMING':
