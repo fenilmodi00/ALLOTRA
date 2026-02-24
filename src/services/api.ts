@@ -57,10 +57,14 @@ const toAPIError = (error: unknown, method: string, url: string): APIError => {
 }
 
 // Create abort controller with timeout
-const createAbortController = (timeout: number): AbortController => {
+const createAbortController = (timeout: number): { controller: AbortController; cancel: () => void } => {
   const controller = new AbortController()
-  setTimeout(() => controller.abort(), timeout)
-  return controller
+  const timer = setTimeout(() => controller.abort(), timeout)
+
+  return {
+    controller,
+    cancel: () => clearTimeout(timer),
+  }
 }
 
 // Main API client
@@ -74,8 +78,9 @@ export const apiClient = {
     devLog(`🌐 API Request: ${method} ${url}`)
 
     for (let attempt = 0; attempt <= API_CONFIG.retryAttempts; attempt++) {
+      const { controller, cancel } = createAbortController(timeout)
+
       try {
-        const controller = createAbortController(timeout)
         const config: RequestInit = {
           method,
           headers: {
@@ -112,6 +117,8 @@ export const apiClient = {
         }
 
         throw normalizedError
+      } finally {
+        cancel()
       }
     }
 

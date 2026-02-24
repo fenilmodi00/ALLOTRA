@@ -6,13 +6,67 @@ import { devError, devLog } from '../utils/logger'
 import { ipoRepository } from '../repositories/ipoRepository'
 import { cacheWrite, cacheReadStale, CACHE_KEYS } from '../utils/asyncStorageCache'
 
+const STARTUP_STATUS_QUEUE: Array<{ key: string; status: string; cacheKey: string }> = [
+  { key: 'ACTIVE', status: 'ACTIVE', cacheKey: CACHE_KEYS.IPO_ACTIVE_FEED },
+  { key: 'CLOSED', status: 'CLOSED', cacheKey: CACHE_KEYS.IPO_CLOSED },
+  { key: 'LISTED', status: 'LISTED', cacheKey: CACHE_KEYS.IPO_LISTED },
+  { key: 'UPCOMING', status: 'UPCOMING', cacheKey: CACHE_KEYS.IPO_UPCOMING },
+  // Final pass to include UNKNOWN/TBA and any records not in status-specific feeds.
+  { key: 'ALL', status: 'all', cacheKey: CACHE_KEYS.IPO_ALL_FEED },
+]
+
+const mergeUniqueIPOs = (base: DisplayIPO[], incoming: DisplayIPO[], overwriteExisting = true): DisplayIPO[] => {
+  if (incoming.length === 0) return base
+
+  const map = new Map<string, DisplayIPO>()
+  const order: string[] = []
+
+  for (const ipo of base) {
+    const id = ipo.id || ipo.name
+    if (!id) continue
+    map.set(id, ipo)
+    order.push(id)
+  }
+
+  for (const ipo of incoming) {
+    const id = ipo.id || ipo.name
+    if (!id) continue
+
+    if (!map.has(id)) {
+      order.push(id)
+      map.set(id, ipo)
+      continue
+    }
+
+    if (overwriteExisting) {
+      map.set(id, ipo)
+    }
+  }
+
+  return order.map((id) => map.get(id)).filter((ipo): ipo is DisplayIPO => !!ipo)
+}
+
+const seedAllStatusCache = (): DisplayIPO[] => {
+  let seeded: DisplayIPO[] = []
+
+  for (const item of STARTUP_STATUS_QUEUE) {
+    const cached = cacheReadStale<DisplayIPO[]>(item.cacheKey)
+    if (cached && cached.length > 0) {
+      seeded = mergeUniqueIPOs(seeded, cached)
+    }
+  }
+
+  return seeded
+}
+
 // Derive the cache key that corresponds to a given status + includeGMP combo
 function ipoListCacheKey(status: IPOStatus | 'all', includeGMP: boolean): string {
-  if ((status === 'all' || status === 'LIVE') && includeGMP) return CACHE_KEYS.IPO_ACTIVE_FEED
+  if (status === 'all') return CACHE_KEYS.IPO_ALL_FEED
+  if (status === 'LIVE' && includeGMP) return CACHE_KEYS.IPO_ACTIVE_FEED
   if (status === 'UPCOMING') return CACHE_KEYS.IPO_UPCOMING
   if (status === 'CLOSED') return CACHE_KEYS.IPO_CLOSED
   if (status === 'LISTED') return CACHE_KEYS.IPO_LISTED
-  return CACHE_KEYS.IPO_ACTIVE_FEED
+  return CACHE_KEYS.IPO_ALL_FEED
 }
 
 // Hook for fetching and managing IPO list with enhanced features
@@ -20,13 +74,17 @@ export const useIPOList = (status: IPOStatus | 'all' = 'all', includeGMP = true)
   const { ipos, loading, error, setIPOs, setLoading, setError, clearError } = useIPOStore()
   const [refreshing, setRefreshing] = useState(false)
   const seededFromCache = useRef(false)
+  const inFlightRef = useRef(false)
 
   // Seed from cache on first mount so the UI has something to show instantly
   useEffect(() => {
     if (seededFromCache.current) return
     seededFromCache.current = true
 
-    const cached = cacheReadStale<DisplayIPO[]>(ipoListCacheKey(status, includeGMP))
+    const cached = status === 'all'
+      ? seedAllStatusCache()
+      : cacheReadStale<DisplayIPO[]>(ipoListCacheKey(status, includeGMP))
+
     if (cached && cached.length > 0) {
       // Only seed when the store is still empty to avoid overwriting a
       // completed fresh fetch that may have beaten the cache read.
@@ -40,6 +98,11 @@ export const useIPOList = (status: IPOStatus | 'all' = 'all', includeGMP = true)
   }, [])
 
   const fetchIPOs = useCallback(async (isRefresh = false) => {
+    if (inFlightRef.current) {
+      return
+    }
+    inFlightRef.current = true
+
     if (isRefresh) {
       setRefreshing(true)
     } else {
@@ -53,22 +116,49 @@ export const useIPOList = (status: IPOStatus | 'all' = 'all', includeGMP = true)
     try {
       let data: DisplayIPO[]
 
-      // V2: Use optimized feed endpoint for all cases
-      if (status === 'all' || status === 'LIVE') {
-        data = await ipoRepository.getFeed(status === 'all' ? 'all' : 'live')
+      // Startup priority queue for Home first paint.
+      if (status === 'all') {
+        let merged: DisplayIPO[] = []
+        let hadAnySuccess = false
+
+        for (const queueItem of STARTUP_STATUS_QUEUE) {
+          try {
+            const chunk = await ipoRepository.getFeed(queueItem.status)
+            hadAnySuccess = true
+            cacheWrite(queueItem.cacheKey, chunk)
+
+            const shouldOverwriteExisting = queueItem.key !== 'ALL'
+            merged = mergeUniqueIPOs(merged, chunk, shouldOverwriteExisting)
+
+            // Progressive updates: ACTIVE appears first, then others stream in.
+            setIPOs(merged)
+          } catch (queueError) {
+            devError(`❌ Failed IPO queue stage ${queueItem.key}:`, queueError)
+
+            const fallbackChunk = cacheReadStale<DisplayIPO[]>(queueItem.cacheKey)
+            if (fallbackChunk && fallbackChunk.length > 0) {
+              merged = mergeUniqueIPOs(merged, fallbackChunk)
+              setIPOs(merged)
+            }
+          }
+        }
+
+        if (!hadAnySuccess && merged.length === 0) {
+          throw new Error('Failed to fetch IPO queue and no cache fallback available')
+        }
+
+        data = merged
+      } else if (status === 'LIVE') {
+        data = await ipoRepository.getFeed('ACTIVE')
       } else if (status === 'UPCOMING' || status === 'CLOSED' || status === 'LISTED') {
-        data = await ipoRepository.getFeed(status.toLowerCase())
+        const statusMap: Record<'UPCOMING' | 'CLOSED' | 'LISTED', string> = {
+          UPCOMING: 'UPCOMING',
+          CLOSED: 'CLOSED',
+          LISTED: 'LISTED',
+        }
+        data = await ipoRepository.getFeed(statusMap[status])
       } else {
         data = await ipoRepository.getFeed()
-      }
-
-      if (__DEV__ && data.length > 0) {
-        devLog('📊 Sample IPO data (V2):', {
-          name: data[0].name,
-          status: data[0].status,
-          dates: data[0].dates,
-          hasGMP: !!data[0].gmp
-        })
       }
 
       setIPOs(data)
@@ -87,6 +177,7 @@ export const useIPOList = (status: IPOStatus | 'all' = 'all', includeGMP = true)
         setIPOs(mockData)
       }
     } finally {
+      inFlightRef.current = false
       setLoading(false)
       setRefreshing(false)
     }

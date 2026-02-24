@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { ScrollView } from 'react-native'
 import { Box } from '@/components/ui/box'
 import { useIPOList, useMarketIndices } from '../hooks'
@@ -18,6 +18,10 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
     const { activeFilter, setActiveFilter } = useIPOUIStore()
     const [showMoreIPOs, setShowMoreIPOs] = useState<{[key: string]: boolean}>({})
     const [showMorePopular, setShowMorePopular] = useState(false)
+
+    useEffect(() => {
+        setActiveFilter('ongoing')
+    }, [setActiveFilter])
 
     // Fetch real market data
     const { indices, loading: indicesLoading } = useMarketIndices(true)

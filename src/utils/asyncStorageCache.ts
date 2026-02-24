@@ -46,6 +46,7 @@ export function cacheReadStale<T>(key: string): T | null {
 // Shared key constants used across hooks
 export const CACHE_KEYS = {
   MARKET_INDICES: 'market_indices',
+  IPO_ALL_FEED: 'ipo_all_feed',
   IPO_ACTIVE_FEED: 'ipo_active_feed',
   IPO_UPCOMING: 'ipo_upcoming',
   IPO_CLOSED: 'ipo_closed',

@@ -24,22 +24,6 @@ export default function App() {
   // Initialize app (cache warmup, etc.)
   const { initialized, warming, error } = useAppInitialization()
 
-  // Run debug tests in development mode only
-  React.useEffect(() => {
-    if (__DEV__) {
-      // Dynamically import debug utilities to avoid including them in production
-      import('./src/debug/networkTest').then(({ runNetworkTest }) => {
-        runNetworkTest()
-      })
-      import('./src/debug/testDataFix').then(({ testDataFix }) => {
-        testDataFix()
-      })
-      import('./src/debug/testIPOData').then(({ runIPODataTest }) => {
-        runIPODataTest()
-      })
-    }
-  }, [])
-
   if (!fontsLoaded) {
     return null
   }

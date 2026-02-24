@@ -176,6 +176,8 @@ export const IPOStockCard = memo(function IPOStockCard({
   }, [ipo.status, ipo.dates])
 
   const statusConfig = useMemo(() => {
+    const hasTimelineDates = !!ipo.dates.open || !!ipo.dates.close || !!ipo.dates.allotment || !!ipo.dates.listing
+
     switch (ipo.status.toUpperCase()) {
       case 'LIVE': {
         const closeLabel = liveStatusMeta.label
@@ -189,6 +191,17 @@ export const IPOStockCard = memo(function IPOStockCard({
         }
       }
       case 'UPCOMING': {
+        if (!ipo.dates.open) {
+          return {
+            label: 'TBA',
+            hasDot: true,
+            dotColor: '#94a3b8',
+            isBlinking: false,
+            bgColor: '#e2e8f0',
+            textColor: '#334155',
+          }
+        }
+
         const daysUntil = getDaysUntilOpen()
         return { label: daysUntil || 'UPCOMING', hasDot: true, dotColor: '#eab308', isBlinking: false, bgColor: '#fef9c3', textColor: '#a16207' }
       }
@@ -196,6 +209,11 @@ export const IPOStockCard = memo(function IPOStockCard({
         return { label: 'CLOSED', hasDot: true, dotColor: '#ea580c', isBlinking: false, bgColor: '#fee2e2', textColor: '#dc2626' }
       case 'LISTED':
         return { label: 'LISTED', hasDot: true, dotColor: '#3b82f6', isBlinking: false, bgColor: '#dbeafe', textColor: '#2563eb' }
+      case 'UNKNOWN':
+        if (!hasTimelineDates) {
+          return { label: 'TBA', hasDot: true, dotColor: '#94a3b8', isBlinking: false, bgColor: '#e2e8f0', textColor: '#334155' }
+        }
+        return { label: 'UPCOMING', hasDot: true, dotColor: '#eab308', isBlinking: false, bgColor: '#fef9c3', textColor: '#a16207' }
       default:
         return { label: ipo.status, hasDot: false, dotColor: '#6b7280', isBlinking: false, bgColor: '#f3f4f6', textColor: '#6b7280' }
     }

@@ -6,6 +6,19 @@ export const getApiBaseUrl = () => {
     return process.env.EXPO_PUBLIC_API_URL
   }
 
+  const Constants = require('expo-constants').default
+  const hostUri: string | undefined =
+    Constants?.expoConfig?.hostUri ||
+    Constants?.manifest2?.extra?.expoClient?.hostUri ||
+    Constants?.manifest?.debuggerHost
+
+  if (hostUri) {
+    const host = hostUri.split(':')[0]
+    if (host) {
+      return `http://${host}:8080/api`
+    }
+  }
+
   // Platform-specific defaults
   const Platform = require('react-native').Platform
   
@@ -23,7 +36,7 @@ export const getApiBaseUrl = () => {
 
 export const API_CONFIG = {
   baseURL: getApiBaseUrl(),
-  timeout: parseInt(process.env.EXPO_PUBLIC_API_TIMEOUT || '10000', 10),
+  timeout: parseInt(process.env.EXPO_PUBLIC_API_TIMEOUT || '15000', 10),
   retryAttempts: 3,
   retryDelay: 1000,
   retryBackoffMultiplier: 2,

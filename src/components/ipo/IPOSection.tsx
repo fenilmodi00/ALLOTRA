@@ -6,7 +6,6 @@ import { Text } from '@/components/ui/text'
 import { growwColors } from '../../design-system/tokens/colors'
 import { IPOStockCard } from './IPOStockCard'
 import { IPOStockCardSkeleton } from './IPOStockCardSkeleton'
-import { PillButton } from '../common'
 import type { DisplayIPO } from '../../types'
 
 interface IPOSectionProps {
@@ -33,13 +32,8 @@ export const IPOSection = memo(function IPOSection({
   loading = false,
 }: IPOSectionProps) {
   const displayIPOs = useMemo(() => {
-    const maxItems = showMore ? 20 : 10
-    return ipos.slice(0, Math.min(ipos.length, maxItems))
-  }, [ipos, showMore])
-
-  const showMoreCount = useMemo(() => {
-    return Math.min(ipos.length - 10, 10)
-  }, [ipos.length])
+    return ipos
+  }, [ipos])
 
   const showSkeleton = loading && ipos.length === 0
 
@@ -99,15 +93,6 @@ export const IPOSection = memo(function IPOSection({
         </Animated.View>
       )}
       
-      {!showSkeleton && ipos.length > 10 && (
-        <Box style={{ marginTop: 16, alignItems: 'center' }}>
-          <PillButton
-            label={showMore ? 'Show Less' : `Show ${showMoreCount} More`}
-            onPress={onToggleShowMore}
-            variant={showMore ? 'outline' : 'primary'}
-          />
-        </Box>
-      )}
     </Box>
   )
 })

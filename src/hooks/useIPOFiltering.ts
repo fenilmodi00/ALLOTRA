@@ -1,56 +1,147 @@
 import { useMemo, useCallback } from 'react'
 import type { DisplayIPO } from '../types'
 
+type IPOStage = 'upcoming' | 'ongoing' | 'allotted' | 'listed'
+const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000
+
+const normalizeStatus = (value?: string): string => {
+  const status = (value || '').toUpperCase()
+  if (status === 'ACTIVE' || status === 'ONGOING') return 'LIVE'
+  return status
+}
+
+const extractDateKey = (value?: string): string | null => {
+  if (!value) return null
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!match) return null
+  return `${match[1]}-${match[2]}-${match[3]}`
+}
+
+const toMarketUtcMs = (dateKey: string, hour = 0, minute = 0): number | null => {
+  const match = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!match) return null
+
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null
+
+  const utcAsIfLocal = Date.UTC(year, month - 1, day, hour, minute, 0, 0)
+  return utcAsIfLocal - IST_OFFSET_MS
+}
+
+const toValidDate = (value?: string): Date | null => {
+  if (!value) return null
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+const startOfDay = (date: Date): Date => {
+  const value = new Date(date)
+  value.setHours(0, 0, 0, 0)
+  return value
+}
+
+const endOfDay = (date: Date): Date => {
+  const value = new Date(date)
+  value.setHours(23, 59, 59, 999)
+  return value
+}
+
+const sortUpcomingWithTBAAtBottom = (ipos: DisplayIPO[]): DisplayIPO[] => {
+  return [...ipos].sort((a, b) => {
+    const aOpen = toValidDate(a.dates.open)
+    const bOpen = toValidDate(b.dates.open)
+
+    const aHasDate = !!aOpen
+    const bHasDate = !!bOpen
+
+    if (aHasDate && bHasDate) {
+      return aOpen!.getTime() - bOpen!.getTime()
+    }
+
+    if (aHasDate && !bHasDate) return -1
+    if (!aHasDate && bHasDate) return 1
+
+    return a.name.localeCompare(b.name)
+  })
+}
+
+const resolveIPOStage = (ipo: DisplayIPO, now: Date): IPOStage => {
+  const openDateKey = extractDateKey(ipo.dates.open)
+  const closeDateKey = extractDateKey(ipo.dates.close)
+  const allotmentDateKey = extractDateKey(ipo.dates.allotment)
+  const listingDateKey = extractDateKey(ipo.dates.listing)
+
+  const openStartMs = openDateKey ? toMarketUtcMs(openDateKey, 0, 0) : null
+  const closeCutoffMs = closeDateKey ? toMarketUtcMs(closeDateKey, 16, 0) : null
+  const allotmentStartMs = allotmentDateKey ? toMarketUtcMs(allotmentDateKey, 0, 0) : null
+  const listingStartMs = listingDateKey ? toMarketUtcMs(listingDateKey, 0, 0) : null
+
+  const status = normalizeStatus(ipo.status)
+  const nowMs = now.getTime()
+
+  if (listingStartMs !== null && nowMs >= listingStartMs) {
+    return 'listed'
+  }
+
+  if (status === 'LISTED') {
+    return 'listed'
+  }
+
+  // User rule: UNKNOWN/TBA should be visible in Upcoming.
+  if (status === 'UPCOMING' || status === 'UNKNOWN') {
+    return 'upcoming'
+  }
+
+  if (allotmentStartMs !== null && nowMs >= allotmentStartMs) {
+    return 'allotted'
+  }
+
+  // Upcoming should not leak into ongoing.
+  if (openStartMs !== null && nowMs < openStartMs) {
+    return 'upcoming'
+  }
+
+  // Ongoing should include close-day until 4 PM IST and closed-before-allotment.
+  if (closeCutoffMs !== null) {
+    if (nowMs <= closeCutoffMs) {
+      return 'ongoing'
+    }
+
+    if (allotmentStartMs !== null && nowMs < allotmentStartMs) {
+      return 'ongoing'
+    }
+  }
+
+  if (status === 'LIVE' || status === 'CLOSED') {
+    return 'ongoing'
+  }
+
+  return 'upcoming'
+}
+
 export const useIPOFiltering = (allIPOs: DisplayIPO[]) => {
-  const now = useMemo(() => new Date(), [])
-
-  const openDateFor = (ipo: DisplayIPO) => (ipo.dates.open ? new Date(ipo.dates.open) : null)
-  const closeDateFor = (ipo: DisplayIPO) => (ipo.dates.close ? new Date(ipo.dates.close) : null)
-  const allotDateFor = (ipo: DisplayIPO) => (ipo.dates.allotment ? new Date(ipo.dates.allotment) : null)
-
-  // Ongoing: currently live or within open..close window or allotment not yet reached
   const ongoingIPOs = useMemo(() => {
-    return allIPOs.filter((ipo) => {
-      if (ipo.status === 'LIVE') return true
-      const openDate = openDateFor(ipo)
-      const closeDate = closeDateFor(ipo)
-      const allotDate = allotDateFor(ipo)
-
-      if (openDate && closeDate) {
-        if (now >= openDate && now <= closeDate) return true
-      }
-      if (allotDate && now < allotDate) return true
-      if (closeDate && now <= closeDate) return true
-      return false
-    })
-  }, [allIPOs, now])
+    const now = new Date()
+    return allIPOs.filter((ipo) => resolveIPOStage(ipo, now) === 'ongoing')
+  }, [allIPOs])
 
   const upcomingIPOs = useMemo(() => {
-    return allIPOs.filter((ipo) => {
-      if (ipo.status === 'UPCOMING') return true
-      const openDate = openDateFor(ipo)
-      if (openDate && now < openDate) return true
-      return false
-    })
-  }, [allIPOs, now])
+    const now = new Date()
+    const upcoming = allIPOs.filter((ipo) => resolveIPOStage(ipo, now) === 'upcoming')
+    return sortUpcomingWithTBAAtBottom(upcoming)
+  }, [allIPOs])
 
-  // Allotted: allotment date has passed (moved from 'closed' to 'allotted')
   const allottedIPOs = useMemo(() => {
-    return allIPOs.filter((ipo) => {
-      const allotDate = allotDateFor(ipo)
-      return !!allotDate && now >= allotDate
-    })
-  }, [allIPOs, now])
+    const now = new Date()
+    return allIPOs.filter((ipo) => resolveIPOStage(ipo, now) === 'allotted')
+  }, [allIPOs])
 
-  // Listed: listing date in the past or status LISTED
   const listedIPOs = useMemo(() => {
-    return allIPOs.filter((ipo) => {
-      const listingDate = ipo.dates.listing ? new Date(ipo.dates.listing) : null
-      if (ipo.status === 'LISTED') return true
-      if (listingDate) return now >= listingDate
-      return false
-    })
-  }, [allIPOs, now])
+    const now = new Date()
+    return allIPOs.filter((ipo) => resolveIPOStage(ipo, now) === 'listed')
+  }, [allIPOs])
 
   const getIPOsForFilter = useCallback((filter: string): DisplayIPO[] => {
     switch (filter) {
@@ -67,6 +158,6 @@ export const useIPOFiltering = (allIPOs: DisplayIPO[]) => {
     upcomingIPOs,
     allottedIPOs,
     listedIPOs,
-    getIPOsForFilter
+    getIPOsForFilter,
   }
 }
