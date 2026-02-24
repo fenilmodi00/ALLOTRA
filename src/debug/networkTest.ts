@@ -1,5 +1,7 @@
 import { API_CONFIG, logNetworkInfo } from '../config/environment'
 
+const MARKET_INDICES_URL = 'https://nifty-proxy.feniluvpce.workers.dev/all'
+
 // Create abort controller with timeout (React Native compatible)
 const createAbortController = (timeout: number): AbortController => {
   const controller = new AbortController()
@@ -17,7 +19,7 @@ export const testNetworkConnection = async () => {
     console.log('🌐 Testing basic connectivity...')
     const controller = createAbortController(API_CONFIG.timeout)
     
-    const response = await fetch(`${API_CONFIG.baseURL}/market/indices`, {
+    const response = await fetch(MARKET_INDICES_URL, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
