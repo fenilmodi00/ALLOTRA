@@ -1,11 +1,8 @@
-import React, { useRef, useCallback, useMemo, useEffect } from 'react'
-import { Dimensions, NativeSyntheticEvent, NativeScrollEvent, Animated } from 'react-native'
+import React, { useCallback, useMemo } from 'react'
 import { Box } from '@/components/ui/box'
 import { IPOFilterNav } from '../common/IPOFilterNav'
 import { IPOSection } from '../ipo'
 import type { DisplayIPO } from '../../types'
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 interface IPOFilterTabsProps {
   filters: string[]
@@ -37,10 +34,6 @@ export const IPOFilterTabs = ({
   onCheckStatus,
   loading
 }: IPOFilterTabsProps) => {
-  const scrollViewRef = useRef<any>(null)
-  const scrollX = useRef(new Animated.Value(0)).current
-  const isProgrammaticScroll = useRef(false)
-
   const calculateEstimatedHeight = useCallback((filter: string) => {
     const ipos = getIPOsForFilter(filter)
     const isExpanded = showMoreIPOs[filter] || false
@@ -63,69 +56,13 @@ export const IPOFilterTabs = ({
     return calculateEstimatedHeight(activeFilter)
   }, [activeFilter, calculateEstimatedHeight])
 
-  useEffect(() => {
-    const index = filters.indexOf(activeFilter)
-    if (index !== -1) {
-      isProgrammaticScroll.current = true
-      if (scrollViewRef.current) {
-        // Change from animated: true to animated: false for the initial scroll
-        scrollViewRef.current.scrollTo({ 
-          x: index * SCREEN_WIDTH, 
-          animated: false 
-        })
-      }
-      setTimeout(() => {
-        isProgrammaticScroll.current = false
-      }, 400)
-    }
-  }, [activeFilter, filters])
-
   const handleTabChange = useCallback((tab: string) => {
     onFilterChange(tab)
   }, [onFilterChange])
 
-  const handleMomentumScrollEnd = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (isProgrammaticScroll.current) return
-    
-    const contentOffsetX = e.nativeEvent.contentOffset.x
-    const index = Math.round(contentOffsetX / SCREEN_WIDTH)
-    const tab = filters[index]
-    if (tab && tab !== activeFilter) {
-      onFilterChange(tab)
-    }
-  }, [filters, activeFilter, onFilterChange])
-
-  const renderAllPages = useMemo(() => {
-    return filters.map((filter) => {
-      const ipos = getIPOsForFilter(filter)
-      // Show count only when we have data; omit during initial load
-      const countLabel = !loading || ipos.length > 0 ? ` (${ipos.length})` : ''
-      const title = `${FILTER_TITLES[filter]}${countLabel}`
-      
-      return (
-        <Box 
-          key={filter}
-          style={{ 
-            width: SCREEN_WIDTH, 
-            paddingHorizontal: 20,
-            minHeight: activeFilterHeight
-          }}
-        >
-          <IPOSection
-            title={title}
-            ipos={ipos}
-            showMore={showMoreIPOs[filter] || false}
-            onToggleShowMore={() => onToggleShowMore(filter)}
-            onIPOPress={onIPOPress}
-            onCheckStatus={filter === 'allotted' ? onCheckStatus : undefined}
-            showCheckButton={filter === 'allotted'}
-            sectionKey={filter}
-            loading={loading}
-          />
-        </Box>
-      )
-    })
-  }, [filters, getIPOsForFilter, showMoreIPOs, onToggleShowMore, onIPOPress, onCheckStatus, activeFilterHeight, loading])
+  const activeIPOs = getIPOsForFilter(activeFilter)
+  const countLabel = !loading || activeIPOs.length > 0 ? ` (${activeIPOs.length})` : ''
+  const title = `${FILTER_TITLES[activeFilter] || 'IPOs'}${countLabel}`
 
   return (
     <Box>
@@ -135,27 +72,18 @@ export const IPOFilterTabs = ({
         onFilterChange={handleTabChange}
       />
       
-      <Box style={{ height: activeFilterHeight }}>
-        <Animated.ScrollView
-          ref={scrollViewRef}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={handleMomentumScrollEnd}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-            { useNativeDriver: true }
-          )}
-          scrollEventThrottle={16}
-          contentContainerStyle={{
-            flexDirection: 'row'
-          }}
-          style={{
-            flexGrow: 0
-          }}
-        >
-          {renderAllPages}
-        </Animated.ScrollView>
+      <Box style={{ minHeight: activeFilterHeight, paddingHorizontal: 20 }}>
+        <IPOSection
+          title={title}
+          ipos={activeIPOs}
+          showMore={showMoreIPOs[activeFilter] || false}
+          onToggleShowMore={() => onToggleShowMore(activeFilter)}
+          onIPOPress={onIPOPress}
+          onCheckStatus={activeFilter === 'allotted' ? onCheckStatus : undefined}
+          showCheckButton={activeFilter === 'allotted'}
+          sectionKey={activeFilter}
+          loading={loading}
+        />
       </Box>
     </Box>
   )
