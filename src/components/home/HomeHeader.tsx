@@ -5,6 +5,7 @@ import { Icon } from '@/components/ui/icon'
 import { Text } from '@/components/ui/text'
 import { Search, Grid, User } from 'lucide-react-native'
 import { growwColors } from '../../design-system/tokens/colors'
+import { colors } from '../../design-system/tokens';
 
 interface HomeHeaderProps {
   onSearchPress: () => void
@@ -41,7 +42,7 @@ export const HomeHeader = ({ onSearchPress, onProfilePress }: HomeHeaderProps) =
               height: 8, 
               borderBottomLeftRadius: 16, 
               borderBottomRightRadius: 16, 
-              backgroundColor: '#4e5acc' 
+              backgroundColor: colors.contentLink 
             }} 
           />
         </Box>

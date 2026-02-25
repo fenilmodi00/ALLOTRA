@@ -12,6 +12,7 @@ import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
 import { growwColors } from '../../design-system/tokens/colors'
 import type { DisplayIPO } from '../../types'
+import { colors } from '../../design-system/tokens';
 
 interface IPOStockCardProps {
   ipo: DisplayIPO
@@ -32,7 +33,7 @@ const CompanyLogo = ({ ipo, size = 38 }: { ipo: DisplayIPO; size?: number }) => 
     .substring(0, 2)
     .toUpperCase()
 
-  const palette = ['#4e5acc', '#00b386', '#f35d5d', '#ffb900', '#9c27b0', '#2196f3']
+  const palette = [colors.contentLink, colors.contentAccent, colors.contentNegative, colors.contentWarning, '#9c27b0', '#2196f3']
   const bgColor = palette[ipo.name.charCodeAt(0) % palette.length] + '20'
   const textColor = palette[ipo.name.charCodeAt(0) % palette.length]
 
@@ -43,9 +44,9 @@ const CompanyLogo = ({ ipo, size = 38 }: { ipo: DisplayIPO; size?: number }) => 
           width: size,
           height: size,
           borderRadius: 12,
-          backgroundColor: '#f8f9fa',
+          backgroundColor: colors.backgroundTertiary,
           borderWidth: 1,
-          borderColor: '#e8e8e8',
+          borderColor: colors.borderLight,
           overflow: 'hidden',
         }}
       >
@@ -71,7 +72,7 @@ const CompanyLogo = ({ ipo, size = 38 }: { ipo: DisplayIPO; size?: number }) => 
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#e8e8e8',
+        borderColor: colors.borderLight,
       }}
     >
       <Text style={{ fontSize: 14, fontWeight: '600', color: textColor }}>
@@ -278,7 +279,7 @@ export const IPOStockCard = memo(function IPOStockCard({
     <Box
       style={{
         backgroundColor: growwColors.surface,
-        borderColor: '#e8e8e8',
+        borderColor: colors.borderLight,
         borderWidth: 1,
         borderRadius: 10,
         width: 176,
@@ -391,7 +392,7 @@ export const IPOStockCard = memo(function IPOStockCard({
       <VStack style={{ position: 'absolute', left: 14, right: 14, top: 58 }}>
         {/* Roboto Medium 16px — Figma: font-medium text-[16px] text-black */}
         <Text
-          style={{ fontSize: 16, fontWeight: '500', color: '#000000', lineHeight: 21 }}
+          style={{ fontSize: 16, fontWeight: '500', color: colors.contentPrimary, lineHeight: 21 }}
           numberOfLines={1}
         >
           {ipo.name}
@@ -399,7 +400,7 @@ export const IPOStockCard = memo(function IPOStockCard({
 
         {/* Roboto Regular 15px — Figma: font-normal text-[15px] text-black, ~top:100 */}
         <Text
-          style={{ fontSize: 15, fontWeight: '400', color: '#000000', lineHeight: 20, marginTop: 11 }}
+          style={{ fontSize: 15, fontWeight: '400', color: colors.contentPrimary, lineHeight: 20, marginTop: 11 }}
         >
           {priceRange}
         </Text>
@@ -410,7 +411,7 @@ export const IPOStockCard = memo(function IPOStockCard({
             style={{
               fontSize: 13,
               fontWeight: '600',
-              color: gmpDisplay.isPositive ? '#00b386' : '#f35d5d',
+              color: gmpDisplay.isPositive ? colors.contentAccent : colors.contentNegative,
               lineHeight: 18,
               marginTop: 5,
             }}

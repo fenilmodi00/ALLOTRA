@@ -2,6 +2,7 @@ import React, { useCallback } from 'react'
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { Box } from '@/components/ui/box'
 import { Text } from '@/components/ui/text'
+import { colors } from '../../design-system/tokens';
 
 interface IPOFilterNavProps {
   filters: string[]
@@ -74,18 +75,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#eff2f6',
   },
   activeTab: {
-    backgroundColor: '#4e5acc',
+    backgroundColor: colors.contentLink,
   },
   tabText: {
     fontFamily: 'Inter',
     fontWeight: '500',
     fontSize: 14,
-    color: '#666666',
+    color: colors.contentSecondary,
     textAlign: 'center',
     includeFontPadding: false,
   },
   activeTabText: {
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.backgroundPrimary,
   },
 })

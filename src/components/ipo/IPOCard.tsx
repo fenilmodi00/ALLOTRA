@@ -7,6 +7,7 @@ import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
 import { growwColors } from '../../design-system/tokens/colors'
 import type { DisplayIPO } from '../../types'
+import { colors } from '../../design-system/tokens';
 
 interface IPOCardProps {
   ipo: DisplayIPO
@@ -47,7 +48,7 @@ const CompanyLogo = ({ ipo, size = 38 }: { ipo: DisplayIPO; size?: number }) => 
           width: size,
           height: size,
           borderRadius: 12,
-          backgroundColor: '#f8f9fa',
+          backgroundColor: colors.backgroundTertiary,
           justifyContent: 'center',
           alignItems: 'center',
           borderWidth: 1,

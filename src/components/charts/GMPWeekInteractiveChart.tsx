@@ -8,6 +8,7 @@ import { growwColors } from '../../design-system/tokens/colors'
 import type { ChartPoint } from '../../utils/gmpChartModel'
 import { buildGMPChartModel, getNearestPointIndex, getTrendSummary } from '../../utils/gmpChartModel'
 import type { GMPHistoryPoint } from '../../types'
+import { colors } from '../../design-system/tokens';
 
 interface GMPWeekInteractiveChartProps {
   history: GMPHistoryPoint[]
@@ -236,7 +237,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    shadowColor: '#000000',
+    shadowColor: colors.contentPrimary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
