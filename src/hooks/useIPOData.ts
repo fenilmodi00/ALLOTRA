@@ -236,7 +236,6 @@ export const useAllotmentCheck = () => {
     setResult(null)
     
     try {
-      // V2: Use optimized endpoint
       const data = await ipoRepository.checkAllotment(ipoId, pan)
       setResult(data)
       addRecentCheck(data)
@@ -317,26 +316,6 @@ export const useMarketIndices = (autoRefresh = true) => {
   return { indices, loading, error, refresh: fetchIndices }
 }
 
-// Hook for performance monitoring (optional)
-export const usePerformanceMetrics = () => {
-  const [metrics, setMetrics] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
-
-  const fetchMetrics = useCallback(async () => {
-    setLoading(true)
-    try {
-      const response = await ipoService.getPerformanceMetrics()
-      setMetrics(response.data)
-    } catch (err) {
-      console.warn('Performance metrics not available:', err)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  return { metrics, loading, fetchMetrics }
-}
-
 // Hook for cache warmup (call on app startup)
 export const useCacheWarmup = () => {
   const [warming, setWarming] = useState(false)
@@ -346,7 +325,7 @@ export const useCacheWarmup = () => {
     try {
       await ipoService.warmupCache()
     } catch (err) {
-      console.warn('Cache warmup failed:', err)
+      devError('Cache warmup failed:', err)
     } finally {
       setWarming(false)
     }
