@@ -2,7 +2,7 @@ import { useMemo, useCallback } from 'react'
 import type { DisplayIPO } from '../types'
 
 type IPOStage = 'upcoming' | 'ongoing' | 'allotted' | 'listed'
-const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000
+const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000 // UTC+5:30 in milliseconds
 
 const normalizeStatus = (value?: string): string => {
   const status = (value || '').toUpperCase()
@@ -34,18 +34,6 @@ const toValidDate = (value?: string): Date | null => {
   if (!value) return null
   const parsed = new Date(value)
   return Number.isNaN(parsed.getTime()) ? null : parsed
-}
-
-const startOfDay = (date: Date): Date => {
-  const value = new Date(date)
-  value.setHours(0, 0, 0, 0)
-  return value
-}
-
-const endOfDay = (date: Date): Date => {
-  const value = new Date(date)
-  value.setHours(23, 59, 59, 999)
-  return value
 }
 
 const sortUpcomingWithTBAAtBottom = (ipos: DisplayIPO[]): DisplayIPO[] => {
