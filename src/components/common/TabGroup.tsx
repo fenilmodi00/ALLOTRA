@@ -1,8 +1,7 @@
 import React, { useState, useCallback } from 'react'
-import { Pressable, View } from 'react-native'
+import { Pressable } from 'react-native'
 import { Text } from '@/components/ui/text'
 import { HStack } from '@/components/ui/hstack'
-import { growwColors } from '../../design-system/tokens/colors'
 
 export interface TabItem {
   key: string
