@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react'
+import React, { memo } from 'react'
 import { View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { Box } from '@/components/ui/box'
@@ -12,7 +12,6 @@ interface IPOSectionProps {
   title: string
   ipos: DisplayIPO[]
   showMore: boolean
-  onToggleShowMore: () => void
   onIPOPress: (ipo: DisplayIPO) => void
   onCheckStatus?: (ipo: DisplayIPO) => void
   showCheckButton?: boolean
@@ -24,16 +23,13 @@ export const IPOSection = memo(function IPOSection({
   title,
   ipos,
   showMore,
-  onToggleShowMore,
   onIPOPress,
   onCheckStatus,
   showCheckButton = false,
   sectionKey,
   loading = false,
 }: IPOSectionProps) {
-  const displayIPOs = useMemo(() => {
-    return ipos
-  }, [ipos])
+  const displayIPOs = ipos
 
   const showSkeleton = loading && ipos.length === 0
 
@@ -78,7 +74,7 @@ export const IPOSection = memo(function IPOSection({
             justifyContent: 'space-between' 
           }}
         >
-          {displayIPOs.map((ipo, index) => {
+          {displayIPOs.map((ipo: DisplayIPO, index: number) => {
             const uniqueKey = `${sectionKey}-${ipo.id || ipo.name?.replace(/\s+/g, '') || 'unknown'}-${index}`
             return (
               <IPOStockCard
