@@ -34,8 +34,6 @@ export const AppNavigator = () => {
                 tabBar={props => <BottomNavigation {...props} />}
                 screenOptions={{
                     headerShown: false,
-                    tabBarStyle: { display: 'none' },
-                    tabBarShowLabel: false,
                 }}
             >
                 <Tab.Screen
