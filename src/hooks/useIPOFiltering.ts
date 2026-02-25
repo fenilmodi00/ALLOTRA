@@ -69,6 +69,39 @@ const sortUpcomingWithTBAAtBottom = (ipos: DisplayIPO[]): DisplayIPO[] => {
   })
 }
 
+const sortOngoingByCloseDate = (ipos: DisplayIPO[]): DisplayIPO[] => {
+  const now = new Date()
+  const nowMs = now.getTime()
+
+  return [...ipos].sort((a, b) => {
+    const aCloseKey = extractDateKey(a.dates.close)
+    const bCloseKey = extractDateKey(b.dates.close)
+    const aCloseCutoffMs = aCloseKey ? toMarketUtcMs(aCloseKey, 16, 0) : null
+    const bCloseCutoffMs = bCloseKey ? toMarketUtcMs(bCloseKey, 16, 0) : null
+
+    const aIsClosed = aCloseCutoffMs !== null && nowMs > aCloseCutoffMs
+    const bIsClosed = bCloseCutoffMs !== null && nowMs > bCloseCutoffMs
+
+    if (aIsClosed && !bIsClosed) return 1
+    if (!aIsClosed && bIsClosed) return -1
+
+    const aClose = toValidDate(a.dates.close)
+    const bClose = toValidDate(b.dates.close)
+
+    const aHasDate = !!aClose
+    const bHasDate = !!bClose
+
+    if (aHasDate && bHasDate) {
+      return aClose!.getTime() - bClose!.getTime()
+    }
+
+    if (aHasDate && !bHasDate) return -1
+    if (!aHasDate && bHasDate) return 1
+
+    return a.name.localeCompare(b.name)
+  })
+}
+
 const resolveIPOStage = (ipo: DisplayIPO, now: Date): IPOStage => {
   const openDateKey = extractDateKey(ipo.dates.open)
   const closeDateKey = extractDateKey(ipo.dates.close)
@@ -126,7 +159,8 @@ const resolveIPOStage = (ipo: DisplayIPO, now: Date): IPOStage => {
 export const useIPOFiltering = (allIPOs: DisplayIPO[]) => {
   const ongoingIPOs = useMemo(() => {
     const now = new Date()
-    return allIPOs.filter((ipo) => resolveIPOStage(ipo, now) === 'ongoing')
+    const ongoing = allIPOs.filter((ipo) => resolveIPOStage(ipo, now) === 'ongoing')
+    return sortOngoingByCloseDate(ongoing)
   }, [allIPOs])
 
   const upcomingIPOs = useMemo(() => {

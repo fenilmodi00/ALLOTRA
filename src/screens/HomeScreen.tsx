@@ -73,6 +73,8 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
 
     const filters = ['upcoming', 'ongoing', 'allotted', 'listed']
 
+    const showPopularSection = activeFilter === 'ongoing' || activeFilter === 'allotted'
+
     return (
         <Box className="flex-1 bg-background-0">
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -101,15 +103,17 @@ export default function HomeScreen({ navigation }: HomeTabScreenProps) {
                     loading={iposLoading}
                 />
 
-                {/* Most Popular IPOs */}
-                <PopularIPOsSection
-                    ipos={allIPOs}
-                    showMore={showMorePopular}
-                    onToggleShowMore={toggleShowMorePopular}
-                    onIPOPress={handleIPOPress}
-                    loading={iposLoading}
-                    dynamicSpacing={currentSpacing}
-                />
+                {/* Most Popular IPOs - Only show for Ongoing and Allotted */}
+                {showPopularSection && (
+                    <PopularIPOsSection
+                        ipos={allIPOs}
+                        showMore={showMorePopular}
+                        onToggleShowMore={toggleShowMorePopular}
+                        onIPOPress={handleIPOPress}
+                        loading={iposLoading}
+                        dynamicSpacing={currentSpacing}
+                    />
+                )}
 
                 {/* Spacer for Bottom Nav */}
                 <Box className="h-20" />

@@ -109,3 +109,23 @@ export const SkeletonIPOList = ({ count = 3 }: { count?: number }) => (
     ))}
   </View>
 )
+
+export const SkeletonIndexCard = () => (
+  <View
+    style={{
+      backgroundColor: growwColors.surface,
+      borderColor: growwColors.border,
+      borderWidth: 1,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      height: 68,
+      justifyContent: 'center',
+    }}
+  >
+    <View style={{ gap: 3 }}>
+      <Skeleton height={13} width={60} />
+      <Skeleton height={13} width={100} />
+    </View>
+  </View>
+)
