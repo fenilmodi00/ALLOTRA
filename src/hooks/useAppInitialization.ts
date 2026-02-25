@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useCacheWarmup } from './useIPOData'
-import { ipoService } from '../services/ipoService'
+import { devError } from '../utils/logger'
 
 export const useAppInitialization = () => {
   const [initialized, setInitialized] = useState(false)
@@ -20,12 +20,9 @@ export const useAppInitialization = () => {
         // Warm up the cache on app startup
         await warmupCache()
         
-        // You can add other initialization tasks here
-        // e.g., check app version, sync user preferences, etc.
-        
         setInitialized(true)
       } catch (err) {
-        console.warn('App initialization failed:', err)
+        devError('App initialization failed:', err)
         setError(err instanceof Error ? err.message : 'Initialization failed')
         // Don't block the app if initialization fails
         setInitialized(true)
