@@ -1,19 +1,14 @@
 import React from 'react'
 import { Pressable } from 'react-native'
 import { MaterialIcons, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons'
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { Box } from '@/components/ui/box'
 import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
 import { growwColors } from '../../design-system/tokens/colors'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-interface BottomNavigationProps {
-    state: any,
-    descriptors: any,
-    navigation: any
-}
-
-export const BottomNavigation = ({ state, descriptors, navigation }: BottomNavigationProps) => {
+export function BottomNavigation({ state, descriptors, navigation }: BottomTabBarProps) {
     const insets = useSafeAreaInsets();
     const bottomPadding = Math.max(insets.bottom, 8);
     
