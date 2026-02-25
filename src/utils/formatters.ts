@@ -126,6 +126,7 @@ export const formatIssueSize = (size?: string): string => {
 }
 
 // Get status color and info
+// TODO: consolidate status colour mapping into design-system tokens (duplicate in dataTransformers.ts)
 export const getStatusInfo = (status: string) => {
   const statusUpper = status.toUpperCase()
   

@@ -237,6 +237,7 @@ export const formatIPODate = (dateString?: string): string => {
 
 /**
  * Get status color for UI
+ * TODO: consolidate status colour mapping into design-system tokens (duplicate in formatters.ts)
  */
 export const getStatusColor = (status: string): string => {
   switch (status.toUpperCase()) {
