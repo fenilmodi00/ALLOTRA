@@ -135,7 +135,7 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
   }
 
   return (
-    <View className="flex-1 bg-[#F5F6F8]">
+    <View className="flex-1 bg-bg-secondary">
       <HStack className="items-center px-4 py-3 bg-white border-b border-outline-100">
         <Pressable onPress={() => navigation.goBack()} className="mr-4">
           <Icon as={ArrowLeft} className="w-6 h-6 text-typography-900" />
@@ -195,8 +195,8 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
               <View className="w-1/2 pt-2">
                 <Text className="text-typography-500 text-xs mb-2">IPO document</Text>
                 <HStack className="items-center gap-1">
-                  <Text className="text-[#00b386] font-bold text-[13px]">RHP PDF</Text>
-                  <Icon as={FileText} className="text-[#00b386] w-3 h-3" />
+                  <Text className="text-content-accent font-bold text-[13px]">RHP PDF</Text>
+                  <Icon as={FileText} className="text-content-accent w-3 h-3" />
                 </HStack>
               </View>
             </View>
@@ -382,7 +382,7 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
                 (ipo.strengths?.length ? ipo.strengths : []).map((item, index) => (
                   <HStack key={`pro-${index}`} className="gap-3 items-start pr-4">
                     <View className="mt-0.5">
-                      <Icon as={ThumbsUp} className="w-[18px] h-[18px] text-[#00b386] fill-[#00b386]" />
+                      <Icon as={ThumbsUp} className="w-[18px] h-[18px] text-content-accent fill-[#00b386]" />
                     </View>
                     <Text className="text-typography-600 text-[13px] leading-[20px] flex-1">{item}</Text>
                   </HStack>
