@@ -9,6 +9,7 @@ import { User, Settings, Moon, ChevronRight, Shield, LogOut, CreditCard } from '
 import { growwColors } from '../design-system/tokens/colors'
 
 export default function ProfileScreen() {
+    // TODO: darkMode state is not yet applied to theme — wire to ThemeContext or Gluestack mode prop
     const [darkMode, setDarkMode] = useState(false)
 
     const MenuItem = ({ icon, title, subtitle, showToggle, isDestructive }: any) => (
@@ -73,6 +74,7 @@ export default function ProfileScreen() {
                             </Text>
                         </Box>
                         <VStack>
+                            {/* TODO: Replace with real authenticated user data */}
                             <Text style={{ fontSize: 18, fontWeight: '700', color: growwColors.text }}>
                                 John Doe
                             </Text>
