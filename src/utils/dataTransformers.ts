@@ -1,5 +1,6 @@
 import { IPO, IPOWithGMP, DisplayIPO, MarketIndex, MarketIndicesAPIResponse, IPOV2Response } from '../types'
 import type { IPOStatus } from '../types'
+import { devError } from './logger'
 
 /**
  * Normalize backend status strings to canonical IPOStatus values.
@@ -9,7 +10,6 @@ const normalizeIPOStatus = (status: string | undefined): IPOStatus => {
   switch ((status || '').toUpperCase()) {
     case 'ACTIVE':
     case 'ONGOING':
-      return 'LIVE'
     case 'LIVE':
       return 'LIVE'
     case 'UPCOMING':
@@ -28,7 +28,7 @@ const normalizeIPOStatus = (status: string | undefined): IPOStatus => {
  */
 export const transformIPOData = (ipo: IPO | IPOWithGMP): DisplayIPO => {
   if (!ipo) {
-    console.warn('⚠️ transformIPOData received null/undefined IPO data')
+    devError('transformIPOData received null/undefined IPO data')
     throw new Error('Invalid IPO data')
   }
 
@@ -88,7 +88,7 @@ export const transformIPOData = (ipo: IPO | IPOWithGMP): DisplayIPO => {
  */
 export const transformIPODataV2 = (ipo: IPOV2Response): DisplayIPO => {
   if (!ipo) {
-    console.warn('⚠️ transformIPODataV2 received null/undefined IPO data')
+    devError('transformIPODataV2 received null/undefined IPO data')
     throw new Error('Invalid IPO data')
   }
 
@@ -150,7 +150,7 @@ export const transformIPODataV2 = (ipo: IPOV2Response): DisplayIPO => {
  */
 export const transformIPOList = (ipos: (IPO | IPOWithGMP)[] | null | undefined): DisplayIPO[] => {
   if (!ipos || !Array.isArray(ipos)) {
-    console.warn('⚠️ transformIPOList received invalid data:', ipos)
+    devError('transformIPOList received invalid data:', ipos)
     return []
   }
   return ipos.map(transformIPOData)
@@ -161,7 +161,7 @@ export const transformIPOList = (ipos: (IPO | IPOWithGMP)[] | null | undefined):
  */
 export const transformIPOListV2 = (ipos: IPOV2Response[] | null | undefined): DisplayIPO[] => {
   if (!ipos || !Array.isArray(ipos)) {
-    console.warn('⚠️ transformIPOListV2 received invalid data:', ipos)
+    devError('transformIPOListV2 received invalid data:', ipos)
     return []
   }
   return ipos.map(transformIPODataV2)
@@ -198,7 +198,7 @@ const determineIPOCategory = (ipo: IPO | IPOWithGMP): 'mainboard' | 'sme' => {
         return sizeInCrores < 25 ? 'sme' : 'mainboard'
       }
     } catch (error) {
-      console.warn('Error parsing issue size:', ipo.issue_size, error)
+      devError('Error parsing issue size:', ipo.issue_size)
     }
   }
   
