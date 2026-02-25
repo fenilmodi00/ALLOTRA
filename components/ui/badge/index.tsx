@@ -17,10 +17,10 @@ const badgeStyle = tva({
   base: 'flex-row items-center rounded-sm data-[disabled=true]:opacity-50 px-2 py-1',
   variants: {
     action: {
-      error: 'bg-background-error border-error-300',
-      warning: 'bg-background-warning border-warning-300',
-      success: 'bg-background-success border-success-300',
-      info: 'bg-background-info border-info-300',
+      error: 'bg-background-error border-content-negative/20',
+      warning: 'bg-background-warning border-content-warning/20',
+      success: 'bg-background-success border-content-positive/20',
+      info: 'bg-background-info border-content-link/20',
       muted: 'bg-background-muted border-background-300',
     },
     variant: {
@@ -36,14 +36,14 @@ const badgeStyle = tva({
 });
 
 const badgeTextStyle = tva({
-  base: 'text-typography-700 font-body font-normal tracking-normal uppercase',
+  base: 'text-content-primary font-body font-normal tracking-normal uppercase',
 
   parentVariants: {
     action: {
-      error: 'text-error-600',
-      warning: 'text-warning-600',
-      success: 'text-success-600',
-      info: 'text-info-600',
+      error: 'text-content-negative',
+      warning: 'text-content-warning',
+      success: 'text-content-positive',
+      info: 'text-content-link',
       muted: 'text-background-800',
     },
     size: {
@@ -81,10 +81,10 @@ const badgeIconStyle = tva({
   base: 'fill-none',
   parentVariants: {
     action: {
-      error: 'text-error-600',
-      warning: 'text-warning-600',
-      success: 'text-success-600',
-      info: 'text-info-600',
+      error: 'text-content-negative',
+      warning: 'text-content-warning',
+      success: 'text-content-positive',
+      info: 'text-content-link',
       muted: 'text-background-800',
     },
     size: {
