@@ -91,7 +91,11 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
   // Financial chart data
   const financialsData = ipo?.financials || []
   const chartData = useMemo(() => {
-    const sortedData = [...financialsData].sort((a, b) => a.year.localeCompare(b.year))
+    const sortedData = [...financialsData].sort((a, b) => {
+      if (!a.year) return -1;
+      if (!b.year) return 1;
+      return a.year.localeCompare(b.year);
+    })
     const maxValue = Math.max(
       ...sortedData.map(d => financialsTab === 'revenue' ? (d.revenue || 0) : financialsTab === 'profit' ? (d.profit || 0) : (d.totalAssets || 0))
     )

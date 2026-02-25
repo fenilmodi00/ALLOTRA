@@ -63,7 +63,9 @@ const sortUpcomingWithTBAAtBottom = (ipos: DisplayIPO[]): DisplayIPO[] => {
     if (aHasDate && !bHasDate) return -1
     if (!aHasDate && bHasDate) return 1
 
-    return a.name.localeCompare(b.name)
+    if (!a.name) return -1;
+      if (!b.name) return 1;
+      return a.name.localeCompare(b.name)
   })
 }
 
