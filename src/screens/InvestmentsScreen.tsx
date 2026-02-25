@@ -7,18 +7,23 @@ import { Text } from '@/components/ui/text'
 import { VStack } from '@/components/ui/vstack'
 import { Search, ScanLine, User } from 'lucide-react-native'
 import { growwColors } from '../design-system/tokens/colors'
-// import { StockCard } from '../components/stocks/StockCard' // Removed unused import
 import { TabBar } from '../components/common/TabBar'
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
+import type { TabParamList } from '../types/navigation.types'
 
-export default function InvestmentsScreen({ navigation }: any) {
+type InvestmentsNavigationProp = BottomTabNavigationProp<TabParamList, 'Mutual Funds'>
+
+// TODO: Replace with real API data when investments endpoint is available
+const PLACEHOLDER_FUNDS = [
+    { name: 'Quant Small Cap Fund', price: 245.60, change: 12.40, changePercent: 1.52, isPositive: true },
+    { name: 'ICICI Prudential Bluechip', price: 98.20, change: -0.40, changePercent: -0.41, isPositive: false },
+    { name: 'Parag Parikh Flexi Cap', price: 68.50, change: 0.80, changePercent: 1.18, isPositive: true },
+    { name: 'HDFC Mid-Cap Opportunities', price: 154.30, change: 3.20, changePercent: 2.12, isPositive: true },
+]
+
+export default function InvestmentsScreen({ navigation }: { navigation: InvestmentsNavigationProp }) {
+    // TODO: activeTab does not yet filter content — wire to data source when investments API is integrated
     const [activeTab, setActiveTab] = useState('Popular')
-
-    const funds = [
-        { name: 'Quant Small Cap Fund', price: 245.60, change: 12.40, changePercent: 1.52, isPositive: true },
-        { name: 'ICICI Prudential Bluechip', price: 98.20, change: -0.40, changePercent: -0.41, isPositive: false },
-        { name: 'Parag Parikh Flexi Cap', price: 68.50, change: 0.80, changePercent: 1.18, isPositive: true },
-        { name: 'HDFC Mid-Cap Opportunities', price: 154.30, change: 3.20, changePercent: 2.12, isPositive: true },
-    ]
 
     return (
         <Box style={{ flex: 1, backgroundColor: growwColors.background }}>
@@ -58,9 +63,7 @@ export default function InvestmentsScreen({ navigation }: any) {
                             Popular Funds
                         </Text>
                         <VStack style={{ gap: 16 }}>
-                            {funds.map((fund, idx) => (
-                                // Reusing StockCard styles but potentially different layout if desired
-                                // For now, listing them horizontally or vertically
+                            {PLACEHOLDER_FUNDS.map((fund, idx) => (
                                 <HStack key={idx} style={{ justifyContent: 'space-between', alignItems: 'center', padding: 14, backgroundColor: 'white', borderRadius: 10, borderWidth: 1, borderColor: growwColors.border }}>
                                     <VStack>
                                         <Text style={{ fontWeight: '600', fontSize: 16, fontFamily: 'Roboto' }}>{fund.name}</Text>
