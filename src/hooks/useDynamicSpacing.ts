@@ -34,11 +34,11 @@ export const useDynamicSpacing = (
     if (ipoCount === 0) return spacing.empty
     if (ipoCount <= 2) return spacing.few
     if (ipoCount <= 6) return spacing.some
-    if (isExpanded && ipoCount > 6) return spacing.expanded
+    if (isExpanded) return spacing.expanded
     return spacing.many
   }, [getIPOsForFilter, activeFilter, showMoreIPOs, spacing])
 
-  const currentSpacing = useMemo(() => calculateSpacing(), [calculateSpacing])
+  const currentSpacing = calculateSpacing()
 
   return {
     currentSpacing,
