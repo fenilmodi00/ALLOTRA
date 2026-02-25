@@ -27,10 +27,15 @@ export const colors = {
   text: mintColors.contentPrimary,
   textSecondary: mintColors.contentSecondary,
   textTertiary: mintColors.contentTertiary,
+  textInverse: mintColors.contentInverse,
   
   // Border colors
   border: mintColors.borderPrimary,
   borderLight: mintColors.borderSecondary,
+  borderSubtle: mintColors.borderSecondary, // Added for compatibility
+  borderStrong: mintColors.borderPrimary, // Added for compatibility
+  borderFocus: mintColors.borderAccent, // Added for compatibility
+  warningBorder: mintColors.borderPrimary, // Added for compatibility
   
   // Icon colors
   iconDefault: mintColors.contentPrimary,
@@ -38,6 +43,16 @@ export const colors = {
   iconInactive: mintColors.contentTertiary,
   iconPositive: mintColors.contentPositive,
   iconNegative: mintColors.contentNegative,
+  
+  // Backwards compatibility additions that TypeScript was missing
+  background: mintColors.backgroundPrimary,
+  success: mintColors.contentPositive,
+  error: mintColors.contentNegative,
+  successBg: mintColors.backgroundPositive,
+  errorBg: mintColors.backgroundNegative,
+  warningBg: mintColors.backgroundNegative, // Fallback to negative for warning background
+  secondary: mintColors.contentSecondary,
+  primaryLight: mintColors.backgroundAccent,
   
   // IPO-specific (using IPO-specific tokens from adapter)
   ipoLive: mintColors.ipoLive,
@@ -48,6 +63,12 @@ export const colors = {
   ipoClosedBackground: mintColors.ipoClosedBackground,
   ipoAllotment: mintColors.ipoAllotment,
   ipoAllotmentBackground: mintColors.ipoAllotmentBackground,
+  
+  // Legacy aliases for IPOs
+  ipoLiveBg: mintColors.ipoLiveBackground,
+  ipoUpcomingBg: mintColors.ipoUpcomingBackground,
+  ipoClosedBg: mintColors.ipoClosedBackground,
+  ipoAllotmentBg: mintColors.ipoAllotmentBackground,
   
   // Skeleton
   skeleton: mintColors.backgroundTertiary,
