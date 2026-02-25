@@ -46,22 +46,6 @@ const formatPointValue = (value: number): string => {
   return `${sign}₹${Math.abs(value).toFixed(2)}`
 }
 
-const getPointPercent = (point: ChartPoint | null): number | null => {
-  if (!point) {
-    return null
-  }
-
-  if (typeof point.listingPercent === 'number' && Number.isFinite(point.listingPercent)) {
-    return point.listingPercent
-  }
-
-  if (typeof point.ipoPrice === 'number' && Number.isFinite(point.ipoPrice) && point.ipoPrice > 0) {
-    return (point.gmpValue / point.ipoPrice) * 100
-  }
-
-  return null
-}
-
 export function GMPWeekInteractiveChart({ history }: GMPWeekInteractiveChartProps) {
   const [width, setWidth] = useState(0)
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
@@ -72,9 +56,7 @@ export function GMPWeekInteractiveChart({ history }: GMPWeekInteractiveChartProp
   const model = useMemo(() => buildGMPChartModel(history, width, CHART_HEIGHT), [history, width])
   const summary = useMemo(() => getTrendSummary(history), [history])
   const activePoint = activeIndex === null ? null : model.points[activeIndex] || null
-  const activePercent = getPointPercent(activePoint)
   const lineColor = summary.latest >= 0 ? growwColors.success : growwColors.error
-  const summaryColor = summary.latest >= 0 ? growwColors.success : growwColors.error
   const activePointColor = activePoint && activePoint.gmpValue >= 0 ? growwColors.success : growwColors.error
 
   useEffect(() => {
@@ -144,9 +126,9 @@ export function GMPWeekInteractiveChart({ history }: GMPWeekInteractiveChartProp
 
   return (
     <View style={styles.card}>
-      <Text style={[styles.latestValue, { color: summaryColor }]}>{formatMainValue(summary.latest)}</Text>
+      <Text style={[styles.latestValue, { color: lineColor }]}>{formatMainValue(summary.latest)}</Text>
       <View style={styles.subheaderRow}>
-        <Text style={[styles.deltaValue, { color: summaryColor }]}>
+        <Text style={[styles.deltaValue, { color: lineColor }]}>
           {formatSignedChange(summary.change)} ({formatPercent(summary.changePercent)})
         </Text>
         <Text style={styles.periodText}>1W</Text>
@@ -182,12 +164,11 @@ export function GMPWeekInteractiveChart({ history }: GMPWeekInteractiveChartProp
         )}
 
         {activePoint && hasTouched && (
-          <Animated.View style={[styles.tooltip, tooltipPosition.getLayout()]}> 
+          <Animated.View style={[styles.tooltip, tooltipPosition.getLayout()]}>
             <Text style={styles.tooltipDate}>
               {new Date(activePoint.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
             </Text>
             <Text style={[styles.tooltipValue, { color: activePointColor }]}>{formatPointValue(activePoint.gmpValue)}</Text>
-            {activePercent !== null && <Text style={[styles.tooltipPercent, { color: activePointColor }]}>{formatPercent(activePercent)}</Text>}
           </Animated.View>
         )}
       </View>
