@@ -73,11 +73,6 @@ const getGMPHistoryRows = (payload: GMPHistoryResponse | GMPHistoryRawPoint[] | 
 
 // IPO Service - All IPO-related API calls
 export const ipoService = {
-  // Get all IPOs with optional filters - now uses V2
-  async getIPOs(params?: { status?: string; page?: number; limit?: number }): Promise<DisplayIPO[]> {
-    return this.getFeedV2({ status: params?.status, limit: params?.limit, offset: params?.page ? (params.page - 1) * (params.limit || 50) : undefined })
-  },
-
   // Get active IPOs with GMP data - now uses V2
   async getActiveIPOsWithGMP(): Promise<DisplayIPO[]> {
     return this.getFeedV2({ status: 'all' })
@@ -113,11 +108,6 @@ export const ipoService = {
     return this.getFeedV2({ status: 'live' })
   },
 
-  // Get single IPO by ID - now uses V2
-  async getIPOById(id: string): Promise<DisplayIPO> {
-    return this.getIPOByIdWithGMP(id)
-  },
-
   // Get single IPO with GMP data by ID (V2 API - recommended)
   async getIPOByIdWithGMP(id: string): Promise<DisplayIPO> {
     const response = await apiClient.get<{ data: IPOV2Response, success: boolean }>(`/v2/ipos/${id}`)
@@ -127,11 +117,6 @@ export const ipoService = {
   // Get IPOs by status with filtering - now uses V2
   async getIPOsByStatus(status: 'UPCOMING' | 'LIVE' | 'CLOSED' | 'LISTED'): Promise<DisplayIPO[]> {
     return this.getFeedV2({ status: status.toLowerCase() })
-  },
-
-  // Get live/ongoing IPOs - now uses V2
-  async getLiveIPOs(): Promise<DisplayIPO[]> {
-    return this.getFeedV2({ status: 'live' })
   },
 
   // Get upcoming IPOs - now uses V2
@@ -147,11 +132,6 @@ export const ipoService = {
   // Get listed IPOs - now uses V2
   async getListedIPOs(): Promise<DisplayIPO[]> {
     return this.getFeedV2({ status: 'listed' })
-  },
-
-  // Check allotment status - now uses V2
-  async checkAllotment(ipoId: string, pan: string): Promise<AllotmentResult> {
-    return this.checkAllotmentV2(ipoId, pan)
   },
 
   // Check allotment status with V2 API (reduced response)
@@ -173,7 +153,7 @@ export const ipoService = {
     return {
       status: mapAllotmentStatus(data.status),
       ipoId: ipoId,
-      ipoName: '',
+      ipoName: '', // TODO: V2 API does not return ipoName; resolve when endpoint is updated
       pan: pan,
       sharesApplied: data.shares_applied,
       sharesAllotted: data.shares_allotted,
@@ -220,18 +200,14 @@ export const ipoService = {
   }
 }
 
-// Export individual functions for tree-shaking
+// Named re-exports for convenient destructured import
 export const { 
-  getIPOs, 
   getActiveIPOsWithGMP,
   getActiveIPOs,
-  getIPOById, 
   getIPOByIdWithGMP,
-  getLiveIPOs, 
   getUpcomingIPOs,
   getClosedIPOs,
   getListedIPOs,
-  checkAllotment, 
   checkAllotmentV2,
   getMarketIndices,
   getIPOGMP,
