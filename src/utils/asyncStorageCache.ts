@@ -23,17 +23,6 @@ export function cacheWrite<T>(key: string, data: T): void {
 }
 
 /**
- * Read a cached value.  Returns `null` when absent or older than `maxAgeMs`
- * (default: 5 minutes).
- */
-export function cacheRead<T>(key: string, maxAgeMs = 5 * 60 * 1000): T | null {
-  const entry = store.get(key) as CacheEntry<T> | undefined
-  if (!entry) return null
-  if (Date.now() - entry.cachedAt > maxAgeMs) return null
-  return entry.data
-}
-
-/**
  * Read a cached value regardless of age — returns whatever was last written,
  * or `null` if nothing has been written yet.  Use this when you want to
  * show stale data while a fresh network request is in flight.
