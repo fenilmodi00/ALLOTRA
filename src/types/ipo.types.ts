@@ -156,6 +156,7 @@ export interface GMPHistoryResponse {
 }
 
 // Stock/Index Data Model
+// TODO: verify if used, remove if not
 export interface Stock {
   id: string
   name: string

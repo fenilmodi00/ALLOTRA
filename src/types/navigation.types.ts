@@ -12,12 +12,12 @@ export type RootStackParamList = {
 // Bottom Tab Navigator
 export type TabParamList = {
   Home: undefined
-  'Mutual Funds': undefined
-  Pay: undefined
+  Allotment: undefined
   Profile: undefined
 }
 
 // Screen Props
+// TODO: verify if used, remove if not
 export type HomeScreenProps = NativeStackScreenProps<RootStackParamList, 'HomeMain'>
 export type IPODetailsScreenProps = NativeStackScreenProps<RootStackParamList, 'IPODetails'>
 export type CheckScreenProps = NativeStackScreenProps<RootStackParamList, 'Check'>
@@ -29,4 +29,5 @@ export type HomeTabScreenProps = CompositeScreenProps<
 >
 
 // Generic navigation prop for components
+// TODO: verify if used, remove if not
 export type AppNavigationProp = HomeScreenProps['navigation']
