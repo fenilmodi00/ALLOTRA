@@ -1,6 +1,6 @@
 import React, { memo, useMemo } from 'react'
-import { Pressable } from 'react-native'
-import { Image as RNImage } from 'react-native'
+import { Pressable, Image as RNImage } from 'react-native'
+import { devLog } from '../../utils/logger'
 import { Box } from '@/components/ui/box'
 import { HStack } from '@/components/ui/hstack'
 import { Text } from '@/components/ui/text'
@@ -64,7 +64,7 @@ const CompanyLogo = ({ ipo, size = 38 }: { ipo: DisplayIPO; size?: number }) => 
           }}
           resizeMode="contain"
           onError={() => {
-            if (__DEV__) console.log('Failed to load logo for:', ipo.name)
+            devLog('Failed to load logo for:', ipo.name)
           }}
         />
       </Box>
