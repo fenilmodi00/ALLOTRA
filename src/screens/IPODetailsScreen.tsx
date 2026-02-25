@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react'
-import { Image, Pressable, ScrollView, View } from 'react-native'
+import React, { useState, useMemo, useRef } from 'react'
+import { Image, Pressable, ScrollView, View, Linking, Animated } from 'react-native'
 import { Icon } from '@/components/ui/icon'
-import { ArrowLeft, CheckCircle, Clock, Image as ImageIcon, ChevronDown, ChevronUp, ThumbsUp, ThumbsDown, FileText, PlayCircle, Minus, Plus } from 'lucide-react-native'
+import { ArrowLeft, Clock, ChevronDown, ChevronUp, ThumbsUp, ThumbsDown, FileText, Minus, Plus } from 'lucide-react-native'
 import { Accordion, AccordionItem, AccordionHeader, AccordionTrigger, AccordionTitleText, AccordionIcon, AccordionContent, AccordionContentText } from '@/components/ui/accordion'
 import { growwColors } from '../design-system/tokens/colors'
 import { useGMPHistory, useIPODetails } from '../hooks'
@@ -16,6 +16,7 @@ import { Box } from '@/components/ui/box'
 import { ExpandableText } from '../components/common/ExpandableText'
 import { TabGroup, TabPanel } from '../components/common/TabGroup'
 import { GMPWeekInteractiveChart } from '../components/charts/GMPWeekInteractiveChart'
+import { FinancialsChart } from '../components/charts/FinancialsChart'
 
 const AccordionSection = ({ value, title, children }: { value: string, title: string, children: React.ReactNode }) => {
   return (
@@ -41,25 +42,35 @@ const AccordionSection = ({ value, title, children }: { value: string, title: st
   )
 }
 
-const TimelineItem = ({ title, date, isActive, isLast, showInfo }: any) => (
-  <View className={`flex-row pl-0 py-3 ${isLast ? '' : ''} items-start`}>
-    <View className="w-5 items-center mr-3 mt-[2px] z-10">
+interface TimelineItemProps {
+  title: string
+  date: string | null | undefined
+  isActive: boolean
+  showInfo?: boolean
+  color?: string
+}
+const TimelineItem = ({ title, date, isActive, showInfo, color = '#00b386' }: TimelineItemProps) => (
+  <HStack className="pl-0 py-3 items-start">
+    <Box className="w-5 items-center mr-3 mt-[2px] z-10">
       {isActive ? (
-        <View className="w-5 h-5 rounded-full border-[2px] border-[#fbbf24] items-center justify-center bg-white">
-          <View className="w-2.5 h-2.5 rounded-full bg-[#fbbf24]" />
-        </View>
+        <Box
+          className="w-5 h-5 rounded-full border-[2px] items-center justify-center bg-white"
+          style={{ borderColor: color }}
+        >
+          <Box className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
+        </Box>
       ) : (
-        <View className="w-[14px] h-[14px] rounded-full border-[2px] border-outline-200 bg-white" />
+        <Box className="w-[14px] h-[14px] rounded-full border-[2px] border-outline-200 bg-white" />
       )}
-    </View>
-    <View className="pb-1">
-      <View className="flex-row items-center">
+    </Box>
+    <Box className="pb-1">
+      <HStack className="items-center">
         <Text className={`font-bold ${isActive ? 'text-typography-900' : 'text-typography-600'} text-[14px]`}>{title}</Text>
         {showInfo && <Icon as={Clock} className="w-3 h-3 ml-1 text-typography-400" />}
-      </View>
+      </HStack>
       <Text className="text-typography-500 text-xs mt-0.5">{date || 'TBA'}</Text>
-    </View>
-  </View>
+    </Box>
+  </HStack>
 )
 
 export default function IPODetailsScreen({ navigation, route }: IPODetailsScreenProps) {
@@ -70,46 +81,24 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
   // GMP History for chart
   const { history: gmpHistory, loading: gmpLoading } = useGMPHistory(ipo?.stockId || '')
 
+  const scrollY = useRef(new Animated.Value(0)).current;
+
+  const headerTitleOpacity = scrollY.interpolate({
+    inputRange: [90, 150],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
   // Tab states
-  const [financialsTab, setFinancialsTab] = useState('revenue')
+  // removed financialsTab state as it's handled internally by FinancialsChart
   const [prosConsTab, setProsConsTab] = useState('pros')
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null)
-
-  // Financials tabs
-  const financialsTabs = [
-    { key: 'revenue', label: 'Revenue' },
-    { key: 'profit', label: 'Profit' },
-    { key: 'totalAssets', label: 'Total Assets' },
-  ]
 
   // Pros/Cons tabs
   const prosConsTabs = [
     { key: 'pros', label: 'Pros' },
     { key: 'cons', label: 'Cons' },
   ]
-
-  // Financial chart data
-  const financialsData = ipo?.financials || []
-  const chartData = useMemo(() => {
-    const sortedData = [...financialsData].sort((a, b) => {
-      const aYear = a.year || ''
-      const bYear = b.year || ''
-      return aYear.localeCompare(bYear)
-    })
-    const maxValue = Math.max(
-      ...sortedData.map(d => financialsTab === 'revenue' ? (d.revenue || 0) : financialsTab === 'profit' ? (d.profit || 0) : (d.totalAssets || 0))
-    )
-    return {
-      data: sortedData,
-      maxValue: maxValue || 1,
-    }
-  }, [financialsData, financialsTab])
-
-  const getBarHeight = (value: number) => {
-    if (!value || chartData.maxValue === 0) return '5%'
-    const height = (value / chartData.maxValue) * 100
-    return `${Math.max(height, 5)}%`
-  }
 
   const formatFinancialValue = (value?: number) => {
     if (!value) return 'N/A'
@@ -139,32 +128,54 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
   }
 
   return (
-    <View className="flex-1 bg-[#F5F6F8]">
-      <HStack className="items-center px-4 py-3 bg-white border-b border-outline-100">
+    <Box className="flex-1 bg-[#F5F6F8]">
+      <HStack className="items-center px-4 py-3 bg-white border-b border-outline-100 z-10" style={{ elevation: 1 }}>
         <Pressable onPress={() => navigation.goBack()} className="mr-4">
           <Icon as={ArrowLeft} className="w-6 h-6 text-typography-900" />
         </Pressable>
+        <Animated.View style={{ opacity: headerTitleOpacity, flex: 1, paddingRight: 8 }}>
+          <Text className="text-[18px] font-bold text-typography-900" numberOfLines={1}>
+            {ipo.growwDetails?.companyName || ipo.name}
+          </Text>
+        </Animated.View>
       </HStack>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+      <Animated.ScrollView
+        contentContainerStyle={{ paddingBottom: 100 }}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+      >
         <VStack className="px-4 py-5 bg-white mb-2">
-          <HStack className="items-center mb-2">
-            {ipo.logoUrl ? (
-              <Image source={{ uri: ipo.logoUrl }} className="w-8 h-8 rounded shrink-0 mr-3" resizeMode="contain" />
-            ) : (
-              <Box className="w-8 h-8 bg-background-50 rounded items-center justify-center mr-3">
-                <Text className="text-typography-400 font-bold text-xs">{ipo.name.charAt(0)}</Text>
-              </Box>
-            )}
-          </HStack>
-          <Text className="text-[20px] font-bold text-typography-900">{ipo.name}</Text>
+          {ipo.logoUrl ? (
+            <Image
+              source={{ uri: ipo.logoUrl }}
+              className="w-20 h-20 rounded mb-2"
+              resizeMode="contain"
+            />
+          ) : (
+            <Box className="w-12 h-12 bg-background-50 rounded items-center justify-center mb-2">
+              <Text className="text-typography-400 font-bold text-lg">
+                {(ipo.growwDetails?.companyName || ipo.name).charAt(0)}
+              </Text>
+            </Box>
+          )}
+          <Text className="text-[22px] font-bold text-typography-900">
+            {ipo.growwDetails?.companyName || ipo.name}
+          </Text>
           <Text className="text-[13px] text-typography-500 mt-1">
-            Closes on {ipo.dates.close ? formatDate(ipo.dates.close) : 'TBA'}
+            Closes on {ipo.growwDetails?.endDate ? formatDate(ipo.growwDetails.endDate) : (ipo.dates.close ? formatDate(ipo.dates.close) : 'TBA')}
           </Text>
 
           <HStack className="items-baseline mt-4 mb-1">
-            <Text className="text-[22px] font-bold text-typography-900">₹{ipo.minInvestment?.toLocaleString() || 'N/A'}</Text>
-            <Text className="text-[13px] text-typography-500 ml-1">/ {ipo.lotSize || 0} shares</Text>
+            <Text className="text-[22px] font-bold text-typography-900">
+              ₹{(ipo.growwDetails?.minPrice && ipo.growwDetails?.lotSize)
+                ? (ipo.growwDetails.minPrice * ipo.growwDetails.lotSize).toLocaleString()
+                : (ipo.minInvestment?.toLocaleString() || 'N/A')}
+            </Text>
+            <Text className="text-[13px] text-typography-500 ml-1">/ {ipo.growwDetails?.lotSize || ipo.lotSize || 0} shares</Text>
           </HStack>
           <Text className="text-[12px] text-typography-500">Minimum Investment</Text>
         </VStack>
@@ -182,7 +193,9 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
             <View className="flex-row flex-wrap justify-between gap-y-6">
               <View className="w-1/2 pr-4">
                 <Text className="text-typography-500 text-xs mb-1">Minimum Investment</Text>
-                <Text className="text-typography-900 font-bold text-sm">₹{ipo.minInvestment?.toLocaleString() || 'N/A'}</Text>
+                <Text className="text-typography-900 font-bold text-sm">₹{(ipo.growwDetails?.minPrice && ipo.growwDetails?.lotSize)
+                  ? (ipo.growwDetails.minPrice * ipo.growwDetails.lotSize).toLocaleString()
+                  : (ipo.minInvestment?.toLocaleString() || 'N/A')} </Text>
               </View>
               <View className="w-1/2 ">
                 <Text className="text-typography-500 text-xs mb-1">Price range</Text>
@@ -194,73 +207,188 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
               </View>
               <View className="w-1/2 ">
                 <Text className="text-typography-500 text-xs mb-1">Issue size</Text>
-                <Text className="text-typography-900 font-bold text-sm">{formatIssueSize(ipo.issueSize) || 'N/A'}</Text>
+                <Text className="text-typography-900 font-bold text-sm">
+                  {ipo.growwDetails?.issueSize
+                    ? formatFinancialValue(ipo.growwDetails.issueSize / 10000000)
+                    : (formatIssueSize(ipo.issueSize) || 'N/A')}
+                </Text>
               </View>
-              <View className="w-1/2 pt-2">
+              <Box className="w-1/2 pt-2">
                 <Text className="text-typography-500 text-xs mb-2">IPO document</Text>
-                <HStack className="items-center gap-1">
-                  <Text className="text-[#00b386] font-bold text-[13px]">RHP PDF</Text>
-                  <Icon as={FileText} className="text-[#00b386] w-3 h-3" />
-                </HStack>
-              </View>
+                {ipo.documentUrl ? (
+                  <Pressable onPress={() => Linking.openURL(ipo.documentUrl!)}>
+                    <HStack className="items-center gap-1">
+                      <Text className="text-[#00b386] font-bold text-[13px]">RHP PDF</Text>
+                      <Icon as={FileText} className="text-[#00b386] w-3 h-3" />
+                    </HStack>
+                  </Pressable>
+                ) : (
+                  <Text className="text-typography-900 font-bold text-sm">N/A</Text>
+                )}
+              </Box>
             </View>
           </AccordionSection>
 
           {/* 2. Application details */}
           <AccordionSection value="app-details" title="Application details">
             <Text className="text-typography-500 text-[13px] mb-4">
-              For {ipo.name}, eligible investors can apply as Regular.
+              For {ipo.growwDetails?.companyName || ipo.name}, eligible investors can apply as Regular.
             </Text>
             <VStack className="gap-5">
-              <View>
-                <Text className="text-typography-900 font-bold text-[14px] mb-1">Apply as Regular</Text>
-                <Text className="text-typography-500 text-[12px]">Price is Rs {ipo.priceRange?.min || 0} - {ipo.priceRange?.max || 0}. Apply upto ₹2,00,000</Text>
-              </View>
-              <View>
-                <Text className="text-typography-900 font-bold text-[14px] mb-1">Apply as High Networth Individual</Text>
-                <Text className="text-typography-500 text-[12px]">Price is Rs {ipo.priceRange?.min || 0} - {ipo.priceRange?.max || 0}. Apply between ₹2,00,000 - ₹5,00,000</Text>
-              </View>
+              {ipo.categories?.map((cat, index) => (
+                <View key={index}>
+                  <Text className="text-typography-900 font-bold text-[14px] mb-1">
+                    {cat.categoryDetails?.categoryLabel || cat.categoryLabel || `Apply as ${cat.category}`}
+                  </Text>
+                  {cat.categoryDetails?.categoryInfo?.map((info, i) => (
+                    <Text key={i} className="text-typography-500 text-[12px]">{info}</Text>
+                  )) || (
+                      <Text className="text-typography-500 text-[12px]">
+                        Price is Rs {cat.minPrice || ipo.priceRange?.min || 0} - {cat.maxPrice || ipo.priceRange?.max || 0}. {cat.categorySubText}
+                      </Text>
+                    )}
+                </View>
+              ))}
+              {!ipo.categories?.length && (
+                <>
+                  <View>
+                    <Text className="text-typography-900 font-bold text-[14px] mb-1">Apply as Regular</Text>
+                    <Text className="text-typography-500 text-[12px]">upto ₹2,00,000</Text>
+                  </View>
+                  <View>
+                    <Text className="text-typography-900 font-bold text-[14px] mb-1">Apply as High Networth Individual</Text>
+                    <Text className="text-typography-500 text-[12px]">between ₹2,00,000 - ₹5,00,000</Text>
+                  </View>
+                </>
+              )}
             </VStack>
           </AccordionSection>
 
           {/* 3. Subscription rate */}
           <AccordionSection value="sub-rate" title="Subscription rate">
-            <View className="rounded-xl border border-outline-100 p-4 mb-3">
-              <HStack className="justify-between items-center mb-3">
-                <Text className="text-typography-500 text-[13px]">Qualified Institutional Buyers</Text>
-                <Text className="text-typography-900 font-bold text-[13px] pt-1">0.00x</Text>
-              </HStack>
-              <HStack className="justify-between items-center mb-3">
-                <Text className="text-typography-500 text-[13px]">Non-Institutional Investor</Text>
-                <Text className="text-typography-900 font-bold text-[13px] pt-1">0.12x</Text>
-              </HStack>
-              <HStack className="justify-between items-center mb-4">
-                <Text className="text-typography-500 text-[13px]">Retail Individual Investor</Text>
-                <Text className="text-typography-900 font-bold text-[13px] pt-1">0.95x</Text>
-              </HStack>
-              <Divider className="mb-4 bg-outline-100" />
-              <HStack className="justify-between items-center">
-                <Text className="text-typography-900 font-bold text-[14px]">Total</Text>
-                <Text className="text-typography-900 font-bold text-[14px]">{ipo.subscriptionStatus ? ipo.subscriptionStatus : '0.11x'}</Text>
-              </HStack>
-            </View>
-            <Text className="text-typography-400 text-[11px] font-medium">As on 23 Feb '26, 6:31 PM</Text>
+            {ipo.growwDetails?.subscriptionRates ? (
+              <View className="rounded-xl border border-outline-100 p-4 mb-3">
+                {ipo.growwDetails.subscriptionRates.filter(r => r.category !== 'TOTAL').map((rate, index) => (
+                  <HStack key={index} className="justify-between items-center mb-3">
+                    <Text className="text-typography-500 text-[13px]">{rate.categoryName}</Text>
+                    <Text className="text-typography-900 font-bold text-[13px] pt-1">
+                      {rate.subscriptionRate !== undefined ? `${rate.subscriptionRate.toFixed(2)}x` : 'N/A'}
+                    </Text>
+                  </HStack>
+                ))}
+                <Divider className="mb-4 bg-outline-100" />
+                <HStack className="justify-between items-center">
+                  <Text className="text-typography-900 font-bold text-[14px]">Total</Text>
+                  <Text className="text-typography-900 font-bold text-[14px]">
+                    {ipo.growwDetails.subscriptionRates.find(r => r.category === 'TOTAL')?.subscriptionRate?.toFixed(2) || 'N/A'}x
+                  </Text>
+                </HStack>
+              </View>
+            ) : (
+              <View className="rounded-xl border border-outline-100 p-4 mb-3">
+                <HStack className="justify-between items-center mb-3">
+                  <Text className="text-typography-500 text-[13px]">Qualified Institutional Buyers</Text>
+                  <Text className="text-typography-900 font-bold text-[13px] pt-1">{ipo.subscription?.qib !== undefined ? `${ipo.subscription.qib.toFixed(2)}x` : 'N/A'}</Text>
+                </HStack>
+                <HStack className="justify-between items-center mb-3">
+                  <Text className="text-typography-500 text-[13px]">Non-Institutional Investor</Text>
+                  <Text className="text-typography-900 font-bold text-[13px] pt-1">{ipo.subscription?.nii !== undefined ? `${ipo.subscription.nii.toFixed(2)}x` : 'N/A'}</Text>
+                </HStack>
+                <HStack className="justify-between items-center mb-4">
+                  <Text className="text-typography-500 text-[13px]">Retail Individual Investor</Text>
+                  <Text className="text-typography-900 font-bold text-[13px] pt-1">{ipo.subscription?.rii !== undefined ? `${ipo.subscription.rii.toFixed(2)}x` : 'N/A'}</Text>
+                </HStack>
+                <Divider className="mb-4 bg-outline-100" />
+                <HStack className="justify-between items-center">
+                  <Text className="text-typography-900 font-bold text-[14px]">Total</Text>
+                  <Text className="text-typography-900 font-bold text-[14px]">{ipo.subscription?.total !== undefined ? `${ipo.subscription.total.toFixed(2)}x` : (ipo.subscriptionStatus || 'N/A')}</Text>
+                </HStack>
+              </View>
+            )}
+            <Text className="text-typography-400 text-[11px] font-medium">Subscription rate matching latest data</Text>
           </AccordionSection>
 
           {/* 4. Schedule */}
           <AccordionSection value="schedule" title="Schedule">
-            <View className="relative">
-              <View className="absolute left-[9px] top-[24px] bottom-[24px] w-[2px] bg-outline-100" />
-              <TimelineItem title="IPO open date" date={formatDate(ipo.dates.open || '')} isActive={true} />
-              <TimelineItem title="IPO close date" date={formatDate(ipo.dates.close || '')} isActive={false} />
-              <TimelineItem title="Allotment date" date={formatDate(ipo.dates.allotment || '')} isActive={false} />
-              <TimelineItem title="Funds unblock or debit" date={formatDate(ipo.dates.allotment || '')} isActive={false} showInfo={true} />
-              <TimelineItem title="Tentative listing date" date={formatDate(ipo.dates.listing || '')} isActive={false} isLast={true} />
-            </View>
+            <Box className="relative">
+              {/* Progress Line Background */}
+              <Box className="absolute left-[9px] top-[24px] bottom-[24px] w-[2px] bg-outline-100" />
+
+              {/* Dynamic Progress Line */}
+              {(() => {
+                const today = new Date();
+                const parseDate = (d?: string) => d ? new Date(d) : null;
+
+                const openDate = parseDate(ipo.growwDetails?.startDate || ipo.dates.open);
+                const closeDate = parseDate(ipo.growwDetails?.endDate || ipo.dates.close);
+                const allotmentDate = parseDate(ipo.growwDetails?.allotmentDate || ipo.dates.allotment);
+                const listingDate = parseDate(ipo.growwDetails?.listingDate || ipo.dates.listing);
+
+                // Determine Status Color
+                let statusColor = '#f97316'; // orange default for upcoming
+                if (openDate && today >= openDate) {
+                  statusColor = '#eab308'; // yellow if open
+                }
+                if (closeDate && today >= closeDate) {
+                  statusColor = '#00b386'; // green if closed
+                }
+
+                const getProgressHeight = () => {
+                  if (listingDate && today >= listingDate) return '100%';
+                  if (allotmentDate && today >= allotmentDate) return '75%';
+                  if (closeDate && today >= closeDate) return '50%';
+                  if (openDate && today >= openDate) return '25%';
+                  return '0%';
+                };
+
+                return (
+                  <>
+                    <Box
+                      className="absolute left-[9px] top-[24px] w-[2px] z-0"
+                      style={{
+                        height: getProgressHeight() as any,
+                        backgroundColor: statusColor
+                      }}
+                    />
+                    <TimelineItem
+                      title="IPO open date"
+                      date={formatDate(ipo.growwDetails?.startDate || ipo.dates.open || '')}
+                      isActive={openDate ? today >= openDate : false}
+                      color={statusColor}
+                    />
+                    <TimelineItem
+                      title="IPO close date"
+                      date={formatDate(ipo.growwDetails?.endDate || ipo.dates.close || '')}
+                      isActive={closeDate ? today >= closeDate : false}
+                      color={statusColor}
+                    />
+                    <TimelineItem
+                      title="Allotment date"
+                      date={formatDate(ipo.growwDetails?.allotmentDate || ipo.dates.allotment || '')}
+                      isActive={allotmentDate ? today >= allotmentDate : false}
+                      color={statusColor}
+                    />
+                    <TimelineItem
+                      title="Funds unblock or debit"
+                      date={formatDate(ipo.growwDetails?.allotmentDate || ipo.dates.allotment || '')}
+                      isActive={allotmentDate ? today >= allotmentDate : false}
+                      showInfo={true}
+                      color={statusColor}
+                    />
+                    <TimelineItem
+                      title="Tentative listing date"
+                      date={formatDate(ipo.growwDetails?.listingDate || ipo.dates.listing || '')}
+                      isActive={listingDate ? today >= listingDate : false}
+                      color={statusColor}
+                    />
+                  </>
+                );
+              })()}
+            </Box>
           </AccordionSection>
 
           {/* GMP Chart Section */}
-          {gmpHistory.length > 0 && (
+          {(gmpHistory.length > 0 || ipo.gmp) && (
             <AccordionSection value="gmp-chart" title="GMP Trend">
               <View className="mb-4">
                 {ipo.gmp && (
@@ -286,16 +414,14 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
                   </HStack>
                 )}
                 {!gmpLoading && gmpHistory.length > 0 ? (
-                  <View className="h-[220px] bg-white rounded-lg overflow-hidden">
+                  <View className="bg-white rounded-lg overflow-hidden">
                     <GMPWeekInteractiveChart history={gmpHistory} />
                   </View>
-                ) : (
+                ) : gmpLoading ? (
                   <View className="h-[100px] items-center justify-center">
-                    <Text className="text-typography-400 text-[13px]">
-                      {gmpLoading ? 'Loading GMP data...' : 'No GMP history available'}
-                    </Text>
+                    <Text className="text-typography-400 text-[13px]">Loading GMP data...</Text>
                   </View>
-                )}
+                ) : null}
               </View>
             </AccordionSection>
           )}
@@ -304,80 +430,35 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
           <AccordionSection value="about" title="About">
             <HStack className="justify-between items-center mb-4">
               <Text className="text-typography-500 text-[13px]">Founded in</Text>
-              <Text className="text-typography-900 font-bold text-[13px]">{ipo.foundedYear || 'N/A'}</Text>
+              <Text className="text-typography-900 font-bold text-[13px]">{ipo.growwDetails?.aboutCompany?.yearFounded || ipo.foundedYear || 'N/A'}</Text>
             </HStack>
             <HStack className="justify-between items-center mb-5">
               <Text className="text-typography-500 text-[13px]">MD/CEO</Text>
-              <Text className="text-typography-900 font-bold text-[13px]">{ipo.mdCeo || 'N/A'}</Text>
+              <Text className="text-typography-900 font-bold text-[13px]">{ipo.growwDetails?.aboutCompany?.managingDirector || ipo.mdCeo || 'N/A'}</Text>
             </HStack>
-            
-            <ExpandableText 
-              content={ipo.about || ipo.description || "No description available."} 
+
+            <ExpandableText
+              content={ipo.growwDetails?.aboutCompany?.aboutCompany || ipo.about || ipo.description || "No description available."}
               maxLength={150}
             />
-
-            {/* Video placeholder - could be made dynamic */}
-            <View className="w-full rounded-xl bg-gray-900 overflow-hidden relative justify-center items-center h-[180px] mt-4">
-              <Image 
-                source={{ uri: 'https://images.unsplash.com/photo-1616423640778-28d1b53229bd?auto=format&fit=crop&q=80&w=1000' }} 
-                className="w-full h-full absolute opacity-70" 
-                resizeMode="cover" 
-              />
-              <View className="w-12 h-12 rounded-full bg-white/90 items-center justify-center pl-1 z-10 shadow-soft-4">
-                <Icon as={PlayCircle} className="w-8 h-8 text-error-600" />
-              </View>
-              <Text className="absolute bottom-3 left-3 text-white/50 text-[10px] w-full bg-black/50 px-2 py-1 leading-normal" numberOfLines={1}>Company Introduction Video</Text>
-            </View>
           </AccordionSection>
 
           {/* 6. Financials */}
           <AccordionSection value="financials" title="Financials">
-            <TabGroup 
-              tabs={financialsTabs} 
-              defaultTab="revenue" 
-              onTabChange={(key) => setFinancialsTab(key)}
-            />
-            <Text className="text-typography-400 text-[11px] mb-8">All values are in Cr</Text>
-
-            {chartData.data.length > 0 ? (
-              <View>
-                <HStack className="h-40 items-end justify-around px-4 mb-2 border-b border-outline-100 pb-0">
-                  {chartData.data.map((item, index) => (
-                    <VStack key={index} className="items-center justify-end h-full w-12 gap-1.5">
-                      <Text className="text-typography-600 text-xs text-center font-medium">
-                        {financialsTab === 'revenue' ? formatFinancialValue(item.revenue) : 
-                         financialsTab === 'profit' ? formatFinancialValue(item.profit) : 
-                         formatFinancialValue(item.totalAssets)}
-                      </Text>
-                      <View 
-                        className="w-3.5 bg-[#00b386]" 
-                        style={{ height: getBarHeight(
-                          financialsTab === 'revenue' ? (item.revenue || 0) : 
-                          financialsTab === 'profit' ? (item.profit || 0) : 
-                          (item.totalAssets || 0)
-                        ) as any }} 
-                      />
-                    </VStack>
-                  ))}
-                </HStack>
-                <HStack className="justify-around px-4 mb-2">
-                  {chartData.data.map((item, index) => (
-                    <Text key={index} className="text-typography-400 text-[12px] w-12 text-center">{item.year}</Text>
-                  ))}
-                </HStack>
-              </View>
+            {ipo.financials && ipo.financials.length > 0 ? (
+              <FinancialsChart financials={ipo.financials} />
             ) : (
-              <View className="items-center justify-center py-8">
+              <Box className="items-center justify-center py-8">
                 <Text className="text-typography-400 text-[13px]">Financial data not available</Text>
-              </View>
+              </Box>
             )}
           </AccordionSection>
 
           {/* 7. Pros and cons */}
           <AccordionSection value="pros-cons" title="Pros and cons">
-            <TabGroup 
-              tabs={prosConsTabs} 
-              defaultTab="pros" 
+            <TabGroup
+              tabs={prosConsTabs}
+              defaultTab="pros"
               onTabChange={(key) => setProsConsTab(key)}
             />
 
@@ -385,22 +466,19 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
               {prosConsTab === 'pros' ? (
                 (ipo.strengths?.length ? ipo.strengths : []).map((item, index) => (
                   <HStack key={`pro-${index}`} className="gap-3 items-start pr-4">
-                    <View className="mt-0.5">
+                    <Box className="mt-0.5">
                       <Icon as={ThumbsUp} className="w-[18px] h-[18px] text-[#00b386] fill-[#00b386]" />
-                    </View>
-                    <Text className="text-typography-600 text-[13px] leading-[20px] flex-1">{item}</Text>
+                    </Box>
+                    <Text className="text-typography-600 text-[13px] leading-[20px] flex-1 text-justify">{item}</Text>
                   </HStack>
                 ))
               ) : (
-                (ipo.risks?.length ? ipo.risks : [
-                  "Risk factor 1 not available",
-                  "Risk factor 2 not available"
-                ]).map((item, index) => (
+                (ipo.risks?.length ? ipo.risks : []).map((item, index) => (
                   <HStack key={`con-${index}`} className="gap-3 items-start pr-4">
-                    <View className="mt-0.5">
+                    <Box className="mt-0.5">
                       <Icon as={ThumbsDown} className="w-[18px] h-[18px] text-error-500 fill-error-500" />
-                    </View>
-                    <Text className="text-typography-600 text-[13px] leading-[20px] flex-1">{item}</Text>
+                    </Box>
+                    <Text className="text-typography-600 text-[13px] leading-[20px] flex-1 text-justify">{item}</Text>
                   </HStack>
                 ))
               )}
@@ -420,21 +498,21 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
                 ipo.faqs!.map((faq, index) => {
                   const isExpanded = expandedFAQ === index
                   return (
-                    <Pressable 
+                    <Pressable
                       key={index}
                       onPress={() => setExpandedFAQ(isExpanded ? null : index)}
-                      className={`p-4 justify-between items-center ${index !== (ipo.faqs?.length || 1) - 1 ? 'border-b border-outline-100' : ''}`}
+                      className={`p-4 justify-between items-start flex-col w-full ${index !== (ipo.faqs?.length || 1) - 1 ? 'border-b border-outline-100' : ''}`}
                     >
-                      <HStack className="flex-1 items-start pr-4">
-                        <Text className="text-typography-900 text-[13px] flex-1 font-medium">{faq.question}</Text>
+                      <HStack className="w-full justify-between items-center">
+                        <Text className="text-typography-900 text-[13px] flex-1 font-medium pr-4">{faq.question}</Text>
+                        <Box>
+                          {isExpanded ? (
+                            <Icon as={Minus} className="text-typography-400 w-5 h-5" />
+                          ) : (
+                            <Icon as={Plus} className="text-typography-400 w-5 h-5" />
+                          )}
+                        </Box>
                       </HStack>
-                      <View className="ml-2">
-                        {isExpanded ? (
-                          <Icon as={Minus} className="text-typography-400 w-5 h-5" />
-                        ) : (
-                          <Icon as={Plus} className="text-typography-400 w-5 h-5" />
-                        )}
-                      </View>
                       {isExpanded && (
                         <Text className="text-typography-500 text-[12px] leading-relaxed mt-3 w-full">
                           {faq.answer}
@@ -444,28 +522,39 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
                   )
                 })
               ) : (
-                <View className="p-4">
+                <Box className="p-4">
                   <Text className="text-typography-400 text-[13px]">FAQs not available</Text>
-                </View>
+                </Box>
               )}
             </VStack>
           </AccordionSection>
         </Accordion>
-      </ScrollView>
+      </Animated.ScrollView>
 
       {ipo.status === 'CLOSED' ? (
-        <View className="p-4 bg-white border-t border-outline-100 absolute bottom-0 left-0 right-0">
+        <Box className="p-4 bg-white border-t border-outline-100 absolute bottom-0 left-0 right-0">
           <Pressable
             className="bg-[#00b386] rounded-lg h-12 justify-center items-center"
             onPress={() => navigation.navigate('Check', { ipoName: ipo.name, ipoId: ipo.id })}
           >
             <Text className="text-white font-bold text-[16px]">Check Allotment Status</Text>
           </Pressable>
-        </View>
+        </Box>
       ) : (
-        <View className="p-4 bg-white border-t border-outline-100 absolute bottom-0 left-0 right-0 shadow-soft-4">
-        </View>
+        <Box className="p-4 bg-white border-t border-outline-100 absolute bottom-0 left-0 right-0 shadow-soft-4">
+          <Pressable
+            className="bg-[#00b386] rounded-lg h-12 justify-center items-center"
+            onPress={() => {
+              // Usually opens broker or application flow, for now placeholder toast/alert or empty
+              if (ipo.rtaLink) {
+                Linking.openURL(ipo.rtaLink)
+              }
+            }}
+          >
+            <Text className="text-white font-bold text-[16px]">Apply for IPO</Text>
+          </Pressable>
+        </Box>
       )}
-    </View>
+    </Box>
   )
 }
