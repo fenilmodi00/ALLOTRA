@@ -11,7 +11,6 @@ import type { DisplayIPO } from '../../types'
 interface IPOSectionProps {
   title: string
   ipos: DisplayIPO[]
-  showMore: boolean
   onIPOPress: (ipo: DisplayIPO) => void
   onCheckStatus?: (ipo: DisplayIPO) => void
   showCheckButton?: boolean
@@ -22,7 +21,6 @@ interface IPOSectionProps {
 export const IPOSection = memo(function IPOSection({
   title,
   ipos,
-  showMore,
   onIPOPress,
   onCheckStatus,
   showCheckButton = false,
@@ -42,8 +40,8 @@ export const IPOSection = memo(function IPOSection({
       ) : null}
 
       {showSkeleton ? (
-        <Animated.View 
-          entering={FadeIn.duration(200)} 
+        <Animated.View
+          entering={FadeIn.duration(200)}
           exiting={FadeOut.duration(150)}
           style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' }}
         >
@@ -52,7 +50,7 @@ export const IPOSection = memo(function IPOSection({
           ))}
         </Animated.View>
       ) : ipos.length === 0 ? (
-        <Box style={{ 
+        <Box style={{
           padding: 15,
           alignItems: 'center',
           backgroundColor: growwColors.surface,
@@ -65,13 +63,13 @@ export const IPOSection = memo(function IPOSection({
           </Text>
         </Box>
       ) : (
-        <Animated.View 
+        <Animated.View
           entering={FadeIn.duration(300)}
-          style={{ 
-            flexDirection: 'row', 
-            flexWrap: 'wrap', 
-            gap: 12, 
-            justifyContent: 'space-between' 
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: 12,
+            justifyContent: 'space-between'
           }}
         >
           {displayIPOs.map((ipo: DisplayIPO, index: number) => {
@@ -88,7 +86,7 @@ export const IPOSection = memo(function IPOSection({
           })}
         </Animated.View>
       )}
-      
+
     </Box>
   )
 })

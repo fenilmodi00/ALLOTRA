@@ -12,10 +12,18 @@ export interface IPOFinancial {
   totalAssets?: number
 }
 
-// Category/Strength
 export interface IPOCategory {
-  label: string
+  label?: string
   description?: string
+  category?: string
+  categoryLabel?: string
+  minPrice?: number
+  maxPrice?: number
+  categorySubText?: string
+  categoryDetails?: {
+    categoryLabel?: string
+    categoryInfo?: string[]
+  }
 }
 
 // FAQ
@@ -108,6 +116,7 @@ export interface DisplayIPO {
   about?: string
   strengths: string[]
   risks: string[]
+  documentUrl?: string
   // GMP Data
   gmp?: {
     value?: number
@@ -125,6 +134,29 @@ export interface DisplayIPO {
   subscription?: SubscriptionData
   foundedYear?: string
   mdCeo?: string
+  growwDetails?: {
+    companyName?: string
+    minPrice?: number
+    maxPrice?: number
+    issueSize?: number
+    lotSize?: number
+    startDate?: string
+    endDate?: string
+    allotmentDate?: string
+    listingDate?: string
+    subscriptionRates?: {
+      category: string
+      categoryName: string
+      subscriptionRate?: number
+    }[]
+    aboutCompany?: {
+      yearFounded?: string
+      managingDirector?: string
+      aboutCompany?: string
+    }
+    pros?: string[]
+    cons?: string[]
+  }
 }
 
 export interface GMPHistoryRawPoint {
@@ -252,5 +284,28 @@ export interface IPOV2Response {
     gain_percent?: number
     estimated_listing?: number
     subscription_status?: string
+  }
+  groww_details?: {
+    companyName?: string
+    minPrice?: number
+    maxPrice?: number
+    issueSize?: number
+    lotSize?: number
+    startDate?: string
+    endDate?: string
+    allotmentDate?: string
+    listingDate?: string
+    subscriptionRates?: {
+      category: string
+      categoryName: string
+      subscriptionRate?: number
+    }[]
+    aboutCompany?: {
+      yearFounded?: string
+      managingDirector?: string
+      aboutCompany?: string
+    }
+    pros?: string[]
+    cons?: string[]
   }
 }

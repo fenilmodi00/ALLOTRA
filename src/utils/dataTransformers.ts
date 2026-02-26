@@ -1,4 +1,4 @@
-import { IPO, IPOWithGMP, DisplayIPO, MarketIndex, MarketIndicesAPIResponse, IPOV2Response } from '../types'
+import { IPO, IPOWithGMP, DisplayIPO, MarketIndex, MarketIndicesAPIResponse, IPOV2Response, IPOFinancial } from '../types'
 import type { IPOStatus } from '../types'
 import { devError } from './logger'
 
@@ -34,7 +34,7 @@ export const transformIPOData = (ipo: IPO | IPOWithGMP): DisplayIPO => {
 
   // Determine category based on issue size or other criteria
   const category = determineIPOCategory(ipo)
-  
+
   const transformed: DisplayIPO = {
     id: ipo.id || '',
     stockId: ipo.stock_id || undefined,
@@ -84,6 +84,32 @@ export const transformIPOData = (ipo: IPO | IPOWithGMP): DisplayIPO => {
 }
 
 /**
+ * Helper to process raw financials into charted records
+ */
+const transformRawFinancials = (rawFinancials: any[]): IPOFinancial[] => {
+  if (!Array.isArray(rawFinancials)) return [];
+  const yearMap = new Map<string, IPOFinancial>();
+  rawFinancials.forEach(data => {
+    if (!data || !data.title || !data.yearly) return;
+    const metricName = data.title.toLowerCase();
+    Object.entries(data.yearly).forEach(([year, value]) => {
+      let entry = yearMap.get(year);
+      if (!entry) {
+        entry = { year };
+        yearMap.set(year, entry);
+      }
+      const numValue = Number(value);
+      if (!isNaN(numValue)) {
+        if (metricName.includes('revenue')) entry.revenue = numValue;
+        else if (metricName.includes('profit') || metricName.includes('pat')) entry.profit = numValue;
+        else if (metricName.includes('asset')) entry.totalAssets = numValue;
+      }
+    });
+  });
+  return Array.from(yearMap.values()).sort((a, b) => a.year.localeCompare(b.year));
+}
+
+/**
  * Transform V2 API response to frontend display format
  */
 export const transformIPODataV2 = (ipo: IPOV2Response): DisplayIPO => {
@@ -124,9 +150,10 @@ export const transformIPODataV2 = (ipo: IPOV2Response): DisplayIPO => {
     about: ipo.description || undefined,
     strengths: [],
     risks: [],
-    financials: ipo.financials || undefined,
+    financials: ipo.financials ? transformRawFinancials(ipo.financials) : undefined,
     categories: ipo.categories || undefined,
     faqs: ipo.faqs || undefined,
+    growwDetails: ipo.groww_details || undefined,
   }
 
   // Add GMP data if available
@@ -173,12 +200,12 @@ export const transformIPOListV2 = (ipos: IPOV2Response[] | null | undefined): Di
 const determineIPOCategory = (ipo: IPO | IPOWithGMP): 'mainboard' | 'sme' => {
   // Logic to determine if it's mainboard or SME
   // You can adjust this based on your business logic
-  
+
   if (ipo.issue_size) {
     try {
       // Handle different formats: "2508000000.00", "1200 Cr", "25.5 Crores", etc.
       const sizeStr = ipo.issue_size.toString().toLowerCase()
-      
+
       // If it contains "cr" or "crore", extract the number
       if (sizeStr.includes('cr')) {
         const match = sizeStr.match(/[\d,]+\.?\d*/)
@@ -188,7 +215,7 @@ const determineIPOCategory = (ipo: IPO | IPOWithGMP): 'mainboard' | 'sme' => {
           return sizeValue < 25 ? 'sme' : 'mainboard'
         }
       }
-      
+
       // If it's a plain number (likely in rupees)
       const numericMatch = sizeStr.match(/^[\d,]+\.?\d*$/)
       if (numericMatch) {
@@ -201,7 +228,7 @@ const determineIPOCategory = (ipo: IPO | IPOWithGMP): 'mainboard' | 'sme' => {
       devError('Error parsing issue size:', ipo.issue_size)
     }
   }
-  
+
   // Default to mainboard if we can't determine
   return 'mainboard'
 }
@@ -222,7 +249,7 @@ export const formatPriceRange = (min?: number, max?: number): string => {
  */
 export const formatIPODate = (dateString?: string): string => {
   if (!dateString) return 'Not available'
-  
+
   try {
     const date = new Date(dateString)
     return date.toLocaleDateString('en-IN', {
@@ -261,13 +288,13 @@ export const getStatusColor = (status: string): string => {
  */
 export const getDaysRemaining = (closeDate?: string): number | null => {
   if (!closeDate) return null
-  
+
   try {
     const close = new Date(closeDate)
     const now = new Date()
     const diffTime = close.getTime() - now.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    
+
     return diffDays > 0 ? diffDays : 0
   } catch {
     return null

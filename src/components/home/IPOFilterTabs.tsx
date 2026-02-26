@@ -11,8 +11,6 @@ interface IPOFilterTabsProps {
   activeFilter: string
   onFilterChange: (filter: string) => void
   getIPOsForFilter: (filter: string) => DisplayIPO[]
-  showMoreIPOs: { [key: string]: boolean }
-  onToggleShowMore: (filter: string) => void
   onIPOPress: (ipo: DisplayIPO) => void
   onCheckStatus: (ipo: DisplayIPO) => void
   loading: boolean
@@ -20,7 +18,7 @@ interface IPOFilterTabsProps {
 
 const FILTER_TITLES: Record<string, string> = {
   ongoing: 'Live IPOs',
-  upcoming: 'Upcoming IPOs', 
+  upcoming: 'Upcoming IPOs',
   allotted: 'Closed IPOs',
   listed: 'Listed IPOs'
 }
@@ -32,8 +30,6 @@ export const IPOFilterTabs = ({
   activeFilter,
   onFilterChange,
   getIPOsForFilter,
-  showMoreIPOs,
-  onToggleShowMore,
   onIPOPress,
   onCheckStatus,
   loading
@@ -53,22 +49,22 @@ export const IPOFilterTabs = ({
 
   const calculateEstimatedHeight = useCallback((filter: string) => {
     const ipos = getIPOsForFilter(filter)
-    const isExpanded = showMoreIPOs[filter] || false
-    
+
     if (ipos.length === 0) {
       return 120
     }
-    
+
     const displayCount = ipos.length
     const rows = Math.ceil(displayCount / 2)
-    const cardHeight = 171
+    // Allotted cards have a check button making them taller (195px) vs standard cards (160px)
+    const cardHeight = filter === 'allotted' ? 195 : 160
     const gap = 12
     const titleHeight = 40
-    const showMoreButton = 0
-    
-    // Total height calculation considering padding and gaps
-    return titleHeight + (rows * cardHeight) + ((rows - 1) * gap) + showMoreButton + 20
-  }, [getIPOsForFilter, showMoreIPOs])
+
+    // Total height calculation considering padding and gaps 
+    // Increased bottom padding to 40 to avoid any overlap issues with the last card
+    return titleHeight + (rows * cardHeight) + ((rows - 1) * gap) + 40
+  }, [getIPOsForFilter])
 
   const activeFilterHeight = useMemo(() => {
     return calculateEstimatedHeight(activeFilter)
@@ -93,16 +89,16 @@ export const IPOFilterTabs = ({
 
   const handleTabChange = useCallback((tab: string) => {
     if (tab === activeFilter) return
-    
+
     isTabPress.current = true
     onFilterChange(tab)
     lastActiveFilter.current = tab
-    
+
     const index = filters.indexOf(tab)
     if (index !== -1 && flatListRef.current) {
       flatListRef.current.scrollToIndex({ index, animated: true })
     }
-    
+
     // Re-enable viewability tracking after animation completes
     setTimeout(() => {
       isTabPress.current = false
@@ -133,8 +129,6 @@ export const IPOFilterTabs = ({
         <IPOSection
           title={title}
           ipos={activeIPOs}
-          showMore={showMoreIPOs[filter] || false}
-          onToggleShowMore={() => onToggleShowMore(filter)}
           onIPOPress={onIPOPress}
           onCheckStatus={filter === 'allotted' ? onCheckStatus : undefined}
           showCheckButton={filter === 'allotted'}
@@ -143,7 +137,7 @@ export const IPOFilterTabs = ({
         />
       </Box>
     )
-  }, [width, getIPOsForFilter, loading, showMoreIPOs, onToggleShowMore, onIPOPress, onCheckStatus])
+  }, [width, getIPOsForFilter, loading, onIPOPress, onCheckStatus])
 
   return (
     <Box>
@@ -153,13 +147,13 @@ export const IPOFilterTabs = ({
         onFilterChange={handleTabChange}
         scrollX={scrollX}
       />
-      
+
       <Animated.View style={[{ overflow: 'hidden' }, animatedHeightStyle]}>
         <AnimatedFlatList
           ref={flatListRef as any}
           data={filters}
           keyExtractor={(item: unknown) => item as string}
-          renderItem={renderItem}
+          renderItem={renderItem as any}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}

@@ -82,18 +82,18 @@ export function FinancialsChart({ financials }: FinancialsChartProps) {
     }
 
     return (
-        <View style={styles.container} className="border border-outline-100 rounded-xl p-4 my-2">
+        <View style={styles.container} className="my-2">
             {/* Tabs */}
-            <HStack className="mb-4 justify-between w-full">
+            <HStack className="mb-6 gap-3">
                 {TABS.map((tab) => {
                     const isActive = activeTab === tab
                     return (
                         <Pressable
                             key={tab}
                             onPress={() => setActiveTab(tab)}
-                            className={`px-2 py-1.5 rounded-full border ${isActive ? 'bg-white border-typography-900 border-[1.5px]' : 'bg-white border-outline-200'} items-center justify-center flex-1 mx-1`}
+                            className={`px-4 py-1.5 rounded-full border ${isActive ? 'bg-white border-typography-900' : 'bg-white border-outline-200'} items-center justify-center`}
                         >
-                            <Text className={`text-[12px] font-medium text-center flex-shrink-0 ${isActive ? 'text-typography-900' : 'text-typography-500'}`} numberOfLines={1}>
+                            <Text className={`text-[13px] font-medium text-center ${isActive ? 'text-typography-900' : 'text-typography-500'}`} numberOfLines={1}>
                                 {tab}
                             </Text>
                         </Pressable>
@@ -101,7 +101,7 @@ export function FinancialsChart({ financials }: FinancialsChartProps) {
                 })}
             </HStack>
 
-            <Text className="text-typography-500 text-xs mb-4 ml-1">All values are in Cr</Text>
+            <Text className="text-typography-500 text-[12px] mb-6">All values are in Cr</Text>
 
             {/* Chart Area */}
             <View style={{ height: CHART_HEIGHT, width: '100%' }}>
@@ -134,7 +134,7 @@ export function FinancialsChart({ financials }: FinancialsChartProps) {
                                         y={y}
                                         width={BAR_WIDTH}
                                         height={barHeight}
-                                        fill={isPositive ? growwColors.success : (growwColors.error || '#eb5b3c')}
+                                        fill={isPositive ? '#00b386' : (growwColors.error || '#eb5b3c')}
                                         rx={2}
                                         ry={2}
                                     />

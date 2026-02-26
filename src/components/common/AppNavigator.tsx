@@ -7,8 +7,7 @@ import { Home, Search, User, Briefcase } from 'lucide-react-native'
 import HomeScreen from '../../screens/HomeScreen'
 import CheckScreen from '../../screens/CheckScreen'
 import ProfileScreen from '../../screens/ProfileScreen'
-import InvestmentsScreen from '../../screens/InvestmentsScreen'
-import SearchScreen from '../../screens/SearchScreen'
+import AllotmentScreen from '../../screens/AllotmentScreen'
 import IPODetailsScreen from '../../screens/IPODetailsScreen'
 import { BottomNavigation } from './BottomNavigation'
 import type { RootStackParamList, TabParamList } from '../../types/navigation.types'
@@ -41,31 +40,25 @@ export const AppNavigator = () => {
                     component={HomeStack}
                     options={{
                         tabBarIcon: ({ color }) => <Icon as={Home} color={color} size="xl" className="h-6 w-6" />,
-                        tabBarLabel: 'Stocks'
+                        tabBarLabel: 'IPO'
                     }}
                 />
+                
                 <Tab.Screen
-                    name="Mutual Funds"
-                    component={InvestmentsScreen}
+                    name="Allotment"
+                    component={AllotmentScreen}
                     options={{
                         tabBarIcon: ({ color }) => <Icon as={Briefcase} color={color} size="xl" className="h-6 w-6" />,
-                        tabBarLabel: 'Mutual Funds'
+                        tabBarLabel: 'Allotment'
                     }}
                 />
-                <Tab.Screen
-                    name="Pay"
-                    component={SearchScreen}
-                    options={{
-                        tabBarIcon: ({ color }) => <Icon as={Search} color={color} size="xl" className="h-6 w-6" />,
-                        tabBarLabel: 'UPI'
-                    }}
-                />
+                
                 <Tab.Screen
                     name="Profile"
                     component={ProfileScreen}
                     options={{
                         tabBarIcon: ({ color }) => <Icon as={User} color={color} size="xl" className="h-6 w-6" />,
-                        tabBarLabel: 'You'
+                        tabBarLabel: 'Profile'
                     }}
                 />
             </Tab.Navigator>

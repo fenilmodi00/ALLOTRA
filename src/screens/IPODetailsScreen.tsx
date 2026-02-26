@@ -128,7 +128,7 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
   }
 
   return (
-    <Box className="flex-1 bg-[#F5F6F8]">
+    <Box className="flex-1 bg-white">
       <HStack className="items-center px-4 py-3 bg-white border-b border-outline-100 z-10" style={{ elevation: 1 }}>
         <Pressable onPress={() => navigation.goBack()} className="mr-4">
           <Icon as={ArrowLeft} className="w-6 h-6 text-typography-900" />
@@ -186,7 +186,7 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
           type="multiple"
           isCollapsible={true}
           defaultValue={['ipo-details', 'app-details', 'sub-rate', 'schedule', 'gmp-chart', 'about', 'financials', 'pros-cons']}
-          className="w-full bg-[#f2f2f2]"
+          className="w-full bg-white"
         >
           {/* 1. IPO details */}
           <AccordionSection value="ipo-details" title="IPO details">
@@ -240,11 +240,11 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
                   <Text className="text-typography-900 font-bold text-[14px] mb-1">
                     {cat.categoryDetails?.categoryLabel || cat.categoryLabel || `Apply as ${cat.category}`}
                   </Text>
-                  {cat.categoryDetails?.categoryInfo?.map((info, i) => (
+                  {cat.categoryDetails?.categoryInfo?.map((info: string, i: number) => (
                     <Text key={i} className="text-typography-500 text-[12px]">{info}</Text>
                   )) || (
                       <Text className="text-typography-500 text-[12px]">
-                        Price is Rs {cat.minPrice || ipo.priceRange?.min || 0} - {cat.maxPrice || ipo.priceRange?.max || 0}. {cat.categorySubText}
+                        Price is Rs {cat.minPrice || ipo.priceRange?.min || 0} - {cat.maxPrice || ipo.priceRange?.max || 0}. {cat.categorySubText || ''}
                       </Text>
                     )}
                 </View>
@@ -464,7 +464,7 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
 
             <VStack className="gap-5">
               {prosConsTab === 'pros' ? (
-                (ipo.strengths?.length ? ipo.strengths : []).map((item, index) => (
+                ((ipo.growwDetails?.pros?.length ? ipo.growwDetails.pros : ipo.strengths) || []).map((item, index) => (
                   <HStack key={`pro-${index}`} className="gap-3 items-start pr-4">
                     <Box className="mt-0.5">
                       <Icon as={ThumbsUp} className="w-[18px] h-[18px] text-[#00b386] fill-[#00b386]" />
@@ -473,7 +473,7 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
                   </HStack>
                 ))
               ) : (
-                (ipo.risks?.length ? ipo.risks : []).map((item, index) => (
+                ((ipo.growwDetails?.cons?.length ? ipo.growwDetails.cons : ipo.risks) || []).map((item, index) => (
                   <HStack key={`con-${index}`} className="gap-3 items-start pr-4">
                     <Box className="mt-0.5">
                       <Icon as={ThumbsDown} className="w-[18px] h-[18px] text-error-500 fill-error-500" />
@@ -482,10 +482,10 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
                   </HStack>
                 ))
               )}
-              {(prosConsTab === 'pros' && !ipo.strengths?.length) && (
+              {(prosConsTab === 'pros' && !(ipo.growwDetails?.pros?.length || ipo.strengths?.length)) && (
                 <Text className="text-typography-400 text-[13px]">No pros available</Text>
               )}
-              {(prosConsTab === 'cons' && !ipo.risks?.length) && (
+              {(prosConsTab === 'cons' && !(ipo.growwDetails?.cons?.length || ipo.risks?.length)) && (
                 <Text className="text-typography-400 text-[13px]">No cons available</Text>
               )}
             </VStack>
@@ -514,7 +514,7 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
                         </Box>
                       </HStack>
                       {isExpanded && (
-                        <Text className="text-typography-500 text-[12px] leading-relaxed mt-3 w-full">
+                        <Text className="text-typography-500 text-[12px] leading-relaxed mt-3 w-full text-justify">
                           {faq.answer}
                         </Text>
                       )}
@@ -531,27 +531,13 @@ export default function IPODetailsScreen({ navigation, route }: IPODetailsScreen
         </Accordion>
       </Animated.ScrollView>
 
-      {ipo.status === 'CLOSED' ? (
+      {ipo.status === 'CLOSED' && (
         <Box className="p-4 bg-white border-t border-outline-100 absolute bottom-0 left-0 right-0">
           <Pressable
             className="bg-[#00b386] rounded-lg h-12 justify-center items-center"
             onPress={() => navigation.navigate('Check', { ipoName: ipo.name, ipoId: ipo.id })}
           >
             <Text className="text-white font-bold text-[16px]">Check Allotment Status</Text>
-          </Pressable>
-        </Box>
-      ) : (
-        <Box className="p-4 bg-white border-t border-outline-100 absolute bottom-0 left-0 right-0 shadow-soft-4">
-          <Pressable
-            className="bg-[#00b386] rounded-lg h-12 justify-center items-center"
-            onPress={() => {
-              // Usually opens broker or application flow, for now placeholder toast/alert or empty
-              if (ipo.rtaLink) {
-                Linking.openURL(ipo.rtaLink)
-              }
-            }}
-          >
-            <Text className="text-white font-bold text-[16px]">Apply for IPO</Text>
           </Pressable>
         </Box>
       )}

@@ -65,10 +65,9 @@ export function BottomNavigation({ state, descriptors, navigation }: BottomTabBa
 
                     // Icon mapping based on route name
                     const getIcon = () => {
-                        if (label === 'Stocks') return <MaterialIcons name="show-chart" size={24} color={color} />
-                        if (label === 'Mutual Funds') return <MaterialCommunityIcons name="view-grid-outline" size={24} color={color} />
-                        if (label === 'UPI') return <Ionicons name="play-outline" size={24} color={color} />
-                        if (route.name === 'Profile') return <Ionicons name="person-circle-outline" size={28} color={color} />
+                        if (label === 'IPO') return <MaterialIcons name="show-chart" size={24} color={color} />
+                        if (label === 'Allotment') return <Ionicons name="card-outline" size={24} color={color} />
+                        if (label === 'Profile') return <Ionicons name="person-circle-outline" size={28} color={color} />
                         return <MaterialIcons name="circle" size={24} color={color} />
                     }
 

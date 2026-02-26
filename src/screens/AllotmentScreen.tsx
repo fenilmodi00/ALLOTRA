@@ -620,7 +620,7 @@ export default function AllotmentScreen() {
                     <ActivityIndicator color={growwColors.primary} size="small" />
                   ) : (
                     <Text style={{ color: growwColors.text, fontWeight: '600', fontSize: 14 }}>
-                      Apply
+                      Check
                     </Text>
                   )}
                 </Pressable>

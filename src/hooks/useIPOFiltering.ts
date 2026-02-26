@@ -102,6 +102,23 @@ const resolveIPOStage = (ipo: DisplayIPO, now: Date): IPOStage => {
   const status = normalizeStatus(ipo.status)
   const nowMs = now.getTime()
 
+  // DEBUG: Log the values for troubleshooting
+  if (ipo.name?.toLowerCase().includes('mobile')) {
+    console.log('[DEBUG IPO]', ipo.name, {
+      rawAllotment: ipo.dates.allotment,
+      rawListing: ipo.dates.listing,
+      rawClose: ipo.dates.close,
+      status,
+      allotmentDateKey,
+      allotmentStartMs,
+      listingDateKey,
+      listingStartMs,
+      nowMs,
+      closeCutoffMs,
+      shouldBeAllotted: allotmentStartMs !== null && nowMs >= allotmentStartMs
+    })
+  }
+
   if (listingStartMs !== null && nowMs >= listingStartMs) {
     return 'listed'
   }
