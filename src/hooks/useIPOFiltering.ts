@@ -110,35 +110,41 @@ const resolveIPOStage = (ipo: DisplayIPO, now: Date): IPOStage => {
     return 'listed'
   }
 
+  // Date-based checks take PRIORITY over status-based logic
+  // This ensures IPOs move to correct tab based on actual dates, not just status
+
+  // 1. If listing date has passed → listed (already checked above)
+
+  // 2. If allotment date has passed → allotted (check BEFORE status fallback)
+  if (allotmentStartMs !== null && nowMs >= allotmentStartMs) {
+    return 'allotted'
+  }
+
+  // 3. Status-based fallbacks (only used when no date info available)
+
   // User rule: UNKNOWN/TBA should be visible in Upcoming.
   if (status === 'UPCOMING' || status === 'UNKNOWN') {
     return 'upcoming'
   }
 
-  if (allotmentStartMs !== null && nowMs >= allotmentStartMs) {
-    return 'allotted'
-  }
-
-  // Upcoming should not leak into ongoing.
-  if (openStartMs !== null && nowMs < openStartMs) {
-    return 'upcoming'
-  }
-
-  // Ongoing should include close-day until 4 PM IST and closed-before-allotment.
+  // Ongoing: only if we have a close date and are before/at close, OR no dates available
   if (closeCutoffMs !== null) {
     if (nowMs <= closeCutoffMs) {
       return 'ongoing'
     }
 
+    // If we have allotment date but it's in the future, still ongoing
     if (allotmentStartMs !== null && nowMs < allotmentStartMs) {
       return 'ongoing'
     }
   }
 
+  // Fallback: if status is LIVE or CLOSED but we have no date info, treat as ongoing
   if (status === 'LIVE' || status === 'CLOSED') {
     return 'ongoing'
   }
 
+  // Default fallback
   return 'upcoming'
 }
 
