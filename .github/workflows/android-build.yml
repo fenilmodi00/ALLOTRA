@@ -33,6 +33,12 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
@@ -42,6 +48,7 @@ jobs:
       - name: Build Debug APK
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew assembleDebug
         env:
           CI: true
@@ -74,6 +81,12 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
@@ -83,6 +96,7 @@ jobs:
       - name: Build Release APK
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew assembleRelease
         env:
           CI: true
