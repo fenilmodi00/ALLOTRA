@@ -148,6 +148,7 @@ Guidance for coding agents working in this repository.
 - Verify commands against `package.json` before documenting or invoking them.
 - Preserve existing behavior in production paths when adding diagnostics.
 - For any UI work involving Gluestack UI (new components, styling updates, migrations, or API changes), first fetch current Gluestack documentation through Context7 MCP (`resolve-library-id` then `query-docs`) and follow that guidance before implementation.
+- For performance optimizations, strictly follow the framework defined in `.kiro/skills/bolt-expo-performance-reviewer.md`.
 
 ## Cursor and Copilot Rules Check
 
