@@ -15,8 +15,8 @@ import type { DisplayIPO } from '../../types'
 
 interface IPOStockCardProps {
   ipo: DisplayIPO
-  onPress?: () => void
-  onCheckStatus?: () => void
+  onPress?: (ipo: DisplayIPO) => void
+  onCheckStatus?: (ipo: DisplayIPO) => void
   showCheckButton?: boolean
 }
 
@@ -435,7 +435,7 @@ export const IPOStockCard = memo(function IPOStockCard({
               marginTop: 8,
               alignItems: 'center',
             }}
-            onPress={onCheckStatus}
+            onPress={() => onCheckStatus(ipo)}
           >
             <Text style={{ color: growwColors.textInverse, fontSize: 12, fontWeight: '500' }}>
               Check
@@ -449,7 +449,7 @@ export const IPOStockCard = memo(function IPOStockCard({
   if (onPress) {
     return (
       <Pressable 
-        onPress={onPress}
+        onPress={() => onPress(ipo)}
         accessibilityRole="button"
         accessibilityLabel={`${ipo.name} IPO, ${priceRange}, ${ipo.status}`}
       >
