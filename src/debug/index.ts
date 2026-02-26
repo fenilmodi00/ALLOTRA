@@ -4,5 +4,4 @@
 export * from './debugKeys'
 export * from './networkTest'
 export * from './testBackend'
-export * from './testDataFix'
 export * from './testIPOData'
