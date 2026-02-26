@@ -10,16 +10,9 @@ export const useAppInitialization = () => {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Run backend test in development
-        if (__DEV__) {
-          // Dynamically import debug utilities to avoid including them in production
-          const { runBackendTest } = await import('../debug/testBackend')
-          runBackendTest()
-        }
-        
         // Warm up the cache on app startup
         await warmupCache()
-        
+
         setInitialized(true)
       } catch (err) {
         devError('App initialization failed:', err)

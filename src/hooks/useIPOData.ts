@@ -168,14 +168,6 @@ export const useIPOList = (status: IPOStatus | 'all' = 'all', includeGMP = true)
       devError('❌ Failed to fetch IPOs:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch IPOs')
       
-      // Fallback to mock data in development
-      if (__DEV__) {
-        devLog('🔄 Using mock data as fallback...')
-        // Dynamically import mock data to avoid including it in production
-        const { getMockIPOData } = await import('../debug/testIPOData')
-        const mockData = getMockIPOData()
-        setIPOs(mockData)
-      }
     } finally {
       inFlightRef.current = false
       setLoading(false)
