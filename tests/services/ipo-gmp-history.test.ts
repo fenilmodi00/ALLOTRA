@@ -37,7 +37,7 @@ describe('ipoService.getGMPHistory', () => {
 
     const result = await ipoService.getGMPHistory('2584')
 
-    expect(getMock).toHaveBeenCalledWith('/gmp/history/2584/chart')
+    expect(getMock).toHaveBeenCalledWith('/v2/gmp/history/2584/chart')
     expect(result).toHaveLength(8)
     expect(result[0]?.date).toBe('2026-02-14')
     expect(result[7]?.gmpValue).toBe(8)
