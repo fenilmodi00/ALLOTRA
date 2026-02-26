@@ -9,62 +9,19 @@ import { Divider } from '@/components/ui/divider'
 import {
   CreditCard,
   Plus,
-  Trash2,
-  CheckCircle,
-  XCircle,
-  Clock,
+  Search,
   ChevronDown,
   ChevronUp,
-  Search,
 } from 'lucide-react-native'
 import { growwColors } from '../design-system/tokens/colors'
 import { PANInput } from '../components/common/PANInput'
 import { validatePAN } from '../utils/validators'
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface SavedPAN {
-  id: string
-  pan: string
-  nickname: string
-}
-
-type AllotmentResult = 'ALLOTTED' | 'NOT_ALLOTTED' | 'PENDING' | null
-
-interface PANResult {
-  pan: string
-  status: AllotmentResult
-  shares: number
-  message: string
-}
+import { useAllotment } from '../hooks/useAllotment'
+import { SectionHeader } from '../components/allotment/SectionHeader'
+import { PANChip } from '../components/allotment/PANChip'
+import { ResultRow } from '../components/allotment/ResultRow'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const STATUS_CONFIG = {
-  ALLOTTED: {
-    label: 'Allotted',
-    color: growwColors.success,
-    bg: growwColors.successBg,
-    border: growwColors.successBorder,
-    Icon: CheckCircle,
-  },
-  NOT_ALLOTTED: {
-    label: 'Not Allotted',
-    color: growwColors.error,
-    bg: growwColors.errorBg,
-    border: growwColors.errorBorder,
-    Icon: XCircle,
-  },
-  PENDING: {
-    label: 'Pending',
-    color: growwColors.warning,
-    bg: growwColors.warningBg,
-    border: growwColors.warningBorder,
-    Icon: Clock,
-  },
-} as const
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
 
 const RECENT_ALLOTTED_IPOS = [
   { id: '1', name: 'PNGS Reva Diamond', date: '26 Feb', subscribed: '0.83x', logo: 'R' },
@@ -74,133 +31,19 @@ const RECENT_ALLOTTED_IPOS = [
   { id: '5', name: 'DOMS Industries', date: '15 Dec', subscribed: '93.52x', logo: 'D' },
 ]
 
-function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
-  return (
-    <VStack style={{ marginBottom: 12 }}>
-      <Text style={{ fontSize: 16, fontWeight: '700', color: growwColors.text, fontFamily: 'Inter_700Bold' }}>
-        {title}
-      </Text>
-      {subtitle && (
-        <Text style={{ fontSize: 12, color: growwColors.textSecondary, marginTop: 2 }}>
-          {subtitle}
-        </Text>
-      )}
-    </VStack>
-  )
-}
-
-function PANChip({
-  pan,
-  onRemove,
-}: {
-  pan: SavedPAN
-  onRemove: (id: string) => void
-}) {
-  return (
-    <HStack
-      style={{
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: growwColors.surface,
-        borderWidth: 1,
-        borderColor: growwColors.border,
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-      }}
-    >
-      <HStack style={{ alignItems: 'center', gap: 12, flex: 1 }}>
-        <Box
-          style={{
-            backgroundColor: growwColors.primaryLight,
-            borderRadius: 8,
-            padding: 8,
-          }}
-        >
-          <Icon as={CreditCard} size="sm" color={growwColors.primary} />
-        </Box>
-        <VStack style={{ flex: 1 }}>
-          <Text style={{ fontSize: 15, fontWeight: '600', color: growwColors.text, letterSpacing: 0.5 }}>
-            {pan.pan}
-          </Text>
-          {pan.nickname ? (
-            <Text style={{ fontSize: 12, color: growwColors.textSecondary, marginTop: 1 }}>
-              {pan.nickname}
-            </Text>
-          ) : null}
-        </VStack>
-      </HStack>
-
-      <Pressable
-        onPress={() => onRemove(pan.id)}
-        hitSlop={12}
-        accessibilityLabel={`Remove PAN ${pan.pan}`}
-        accessibilityRole="button"
-      >
-        <Icon as={Trash2} size="sm" color={growwColors.error} />
-      </Pressable>
-    </HStack>
-  )
-}
-
-function ResultRow({ result }: { result: PANResult }) {
-  const cfg = result.status ? STATUS_CONFIG[result.status] : null
-  if (!cfg) return null
-
-  return (
-    <HStack
-      style={{
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: cfg.bg,
-        borderWidth: 1,
-        borderColor: cfg.border,
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-      }}
-    >
-      <HStack style={{ alignItems: 'center', gap: 10, flex: 1 }}>
-        <Icon as={cfg.Icon} size="sm" color={cfg.color} />
-        <VStack style={{ flex: 1 }}>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: growwColors.text, letterSpacing: 0.5 }}>
-            {result.pan}
-          </Text>
-          <Text style={{ fontSize: 12, color: growwColors.textSecondary, marginTop: 1 }}>
-            {result.message}
-          </Text>
-        </VStack>
-      </HStack>
-      <VStack style={{ alignItems: 'flex-end' }}>
-        <Text style={{ fontSize: 13, fontWeight: '700', color: cfg.color }}>
-          {cfg.label}
-        </Text>
-        {result.status === 'ALLOTTED' && (
-          <Text style={{ fontSize: 11, color: growwColors.textSecondary, marginTop: 1 }}>
-            {result.shares} shares
-          </Text>
-        )}
-      </VStack>
-    </HStack>
-  )
-}
-
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function AllotmentScreen() {
-  // Saved PANs
-  const [savedPANs, setSavedPANs] = useState<SavedPAN[]>([])
+  const { savedPANs, results, checkingId, addPAN, removePAN, checkAllotment } = useAllotment()
+
+  // Local UI state
   const [addPanValue, setAddPanValue] = useState('')
   const [addNickname, setAddNickname] = useState('')
   const [showAddForm, setShowAddForm] = useState(false)
   const [panValid, setPanValid] = useState(false)
-
-  // Bulk check
-  const [ipoName, setIpoName] = useState('')
-  const [results, setResults] = useState<PANResult[]>([])
-  const [checkingId, setCheckingId] = useState<string | null>(null)
   const [resultsExpanded, setResultsExpanded] = useState(true)
   const [showAllIpos, setShowAllIpos] = useState(false)
+  const [ipoName, setIpoName] = useState('')
 
   // ── PAN management ──────────────────────────────────────────────────────────
 
@@ -210,23 +53,18 @@ export default function AllotmentScreen() {
       Alert.alert('Invalid PAN', error || 'Please enter a valid PAN number')
       return
     }
-    if (savedPANs.some((p) => p.pan === addPanValue.toUpperCase())) {
-      Alert.alert('Duplicate PAN', 'This PAN is already saved.')
+
+    const result = addPAN(addPanValue, addNickname)
+    if (!result.success && result.error) {
+      Alert.alert('Duplicate PAN', result.error)
       return
     }
-    setSavedPANs((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        pan: addPanValue.toUpperCase(),
-        nickname: addNickname.trim(),
-      },
-    ])
+
     setAddPanValue('')
     setAddNickname('')
     setShowAddForm(false)
     setPanValid(false)
-  }, [addPanValue, addNickname, savedPANs])
+  }, [addPanValue, addNickname, addPAN])
 
   const handleRemovePAN = useCallback((id: string) => {
     Alert.alert('Remove PAN', 'Are you sure you want to remove this PAN?', [
@@ -234,10 +72,10 @@ export default function AllotmentScreen() {
       {
         text: 'Remove',
         style: 'destructive',
-        onPress: () => setSavedPANs((prev) => prev.filter((p) => p.id !== id)),
+        onPress: () => removePAN(id),
       },
     ])
-  }, [])
+  }, [removePAN])
 
   // ── Bulk allotment check ────────────────────────────────────────────────────
 
@@ -246,34 +84,10 @@ export default function AllotmentScreen() {
       Alert.alert('No PANs', 'Please add at least one PAN to check allotment.')
       return
     }
-
-    setCheckingId(selectedIpoId)
     setIpoName(selectedIpoName)
-    setResults([])
-
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 1500))
-
-    const statuses: AllotmentResult[] = ['ALLOTTED', 'NOT_ALLOTTED', 'PENDING']
-    const mockResults: PANResult[] = savedPANs.map((p) => {
-      const status = statuses[Math.floor(Math.random() * statuses.length)]
-      return {
-        pan: p.pan,
-        status,
-        shares: status === 'ALLOTTED' ? Math.floor(Math.random() * 3 + 1) * 50 : 0,
-        message:
-          status === 'ALLOTTED'
-            ? 'Congratulations! Shares allotted.'
-            : status === 'PENDING'
-            ? 'Allotment under process.'
-            : 'Better luck next time.',
-      }
-    })
-
-    setResults(mockResults)
+    await checkAllotment(selectedIpoId, selectedIpoName)
     setResultsExpanded(true)
-    setCheckingId(null)
-  }, [savedPANs])
+  }, [savedPANs, checkAllotment])
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -315,7 +129,7 @@ export default function AllotmentScreen() {
               Allotment
             </Text>
             <Text style={{ fontSize: 12, color: growwColors.textSecondary }}>
-              Manage PANs &amp; check IPO allotment
+              Manage PANs & check IPO allotment
             </Text>
           </VStack>
         </HStack>
