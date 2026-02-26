@@ -23,7 +23,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'bun'
 
       - name: Install bun
         uses: oven-sh/setup-bun@v1
@@ -32,6 +31,12 @@ jobs:
 
       - name: Install dependencies
         run: bun install
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -42,6 +47,7 @@ jobs:
       - name: Build Debug APK
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew assembleDebug
         env:
           CI: true
@@ -64,7 +70,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'bun'
 
       - name: Install bun
         uses: oven-sh/setup-bun@v1
@@ -73,6 +78,12 @@ jobs:
 
       - name: Install dependencies
         run: bun install
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -83,6 +94,7 @@ jobs:
       - name: Build Release APK
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew assembleRelease
         env:
           CI: true
