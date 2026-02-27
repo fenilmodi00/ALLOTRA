@@ -15,44 +15,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
+          cache: npm
 
-      - name: Install bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
         with:
-          bun-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install dependencies
-        run: bun install
+        run: npm ci
 
-      - name: Install EAS CLI
-        run: npm install -g eas-cli
-
-      - name: EAS Login
-        run: eas login
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
-      - name: EAS Build for Android (Preview APK)
-        id: build
-        run: eas build -p android --profile preview
-        env:
-          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
-
-      - name: Download build artifacts
-        if: success()
-        run: |
-          mkdir -p apk-output
-          eas build:download -p android --path ./apk-output --latest || echo "Download skipped"
-
-      - name: Upload APK artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-apk
-          path: apk-output/*.apk
+      - name: Build on EAS
+        run: eas build -p android --profile preview --non-interactive --no-wait
