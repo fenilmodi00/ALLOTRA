@@ -40,15 +40,7 @@ jobs:
 
       - name: EAS Build for Android (Preview APK)
         id: build
-        run: |
-          eas build -p android --profile preview --non-interactive \
-            --env EXPO_PUBLIC_API_URL="${{ secrets.EXPO_PUBLIC_API_URL }}" \
-            --env EXPO_PUBLIC_API_TIMEOUT="${{ secrets.EXPO_PUBLIC_API_TIMEOUT }}" \
-            --env EXPO_PUBLIC_APP_NAME="${{ secrets.EXPO_PUBLIC_APP_NAME }}" \
-            --env EXPO_PUBLIC_APP_VERSION="${{ secrets.EXPO_PUBLIC_APP_VERSION }}" \
-            --env EXPO_PUBLIC_ENABLE_ANALYTICS="${{ secrets.EXPO_PUBLIC_ENABLE_ANALYTICS }}" \
-            --env EXPO_PUBLIC_ENABLE_CRASH_REPORTING="${{ secrets.EXPO_PUBLIC_ENABLE_CRASH_REPORTING }}" \
-            --env EXPO_PUBLIC_ENABLE_DEBUG="${{ secrets.EXPO_PUBLIC_ENABLE_DEBUG }}"
+        run: eas build -p android --profile preview --non-interactive
         env:
           EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
 
