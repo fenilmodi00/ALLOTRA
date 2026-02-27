@@ -1,0 +1,59 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    types: [opened, synchronize]
+  workflow_dispatch:
+
+jobs:
+  build-android-apk:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      - name: EAS Login
+        run: eas login --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: EAS Build for Android (Preview APK)
+        id: build
+        run: eas build -p android --profile preview --non-interactive
+        env:
+          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+
+      - name: Download build artifacts
+        if: success()
+        run: |
+          mkdir -p apk-output
+          # Download the built APK
+          eas build:download -p android --path ./apk-output --latest || echo "Download skipped"
+
+      - name: Upload APK artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: apk-output/*.apk
