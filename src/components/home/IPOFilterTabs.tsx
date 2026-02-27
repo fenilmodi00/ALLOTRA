@@ -50,6 +50,14 @@ export const IPOFilterTabs = ({
   const calculateEstimatedHeight = useCallback((filter: string) => {
     const ipos = getIPOsForFilter(filter)
 
+    // When loading and no data, we show 4 skeletons (2 rows)
+    if (loading && ipos.length === 0) {
+      const cardHeight = 160
+      const gap = 12
+      const titleHeight = 40
+      return titleHeight + (3 * cardHeight) + gap + 40
+    }
+
     if (ipos.length === 0) {
       return 120
     }
@@ -64,7 +72,7 @@ export const IPOFilterTabs = ({
     // Total height calculation considering padding and gaps 
     // Increased bottom padding to 40 to avoid any overlap issues with the last card
     return titleHeight + (rows * cardHeight) + ((rows - 1) * gap) + 40
-  }, [getIPOsForFilter])
+  }, [getIPOsForFilter, loading])
 
   const activeFilterHeight = useMemo(() => {
     return calculateEstimatedHeight(activeFilter)

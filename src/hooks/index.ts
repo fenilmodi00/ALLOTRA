@@ -4,8 +4,7 @@ export {
   useIPOList,
   useIPODetails,
   useAllotmentCheck,
-  useMarketIndices,
-  useCacheWarmup
+  useMarketIndices
 } from './useIPOData'
 export { useIPOFiltering } from './useIPOFiltering'
 export { useGMPHistory } from './useGMPHistory'

@@ -75,25 +75,44 @@ export const useIPOList = (status: IPOStatus | 'all' = 'all', includeGMP = true)
   const [refreshing, setRefreshing] = useState(false)
   const seededFromCache = useRef(false)
   const inFlightRef = useRef(false)
+  const isMounted = useRef(true)
+
+  // Clean up on unmount
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  // Use a synchronous initializer for loading to prevent first-render flicker if cache exists
+  const [initialized, setInitialized] = useState(false);
 
   // Seed from cache on first mount so the UI has something to show instantly
   useEffect(() => {
     if (seededFromCache.current) return
     seededFromCache.current = true
 
+    const cacheKey = ipoListCacheKey(status, includeGMP)
     const cached = status === 'all'
       ? seedAllStatusCache()
-      : cacheReadStale<DisplayIPO[]>(ipoListCacheKey(status, includeGMP))
+      : cacheReadStale<DisplayIPO[]>(cacheKey)
 
     if (cached && cached.length > 0) {
-      // Only seed when the store is still empty to avoid overwriting a
-      // completed fresh fetch that may have beaten the cache read.
       if (useIPOStore.getState().ipos.length === 0) {
-        devLog('📦 Seeding IPO list from cache:', { count: cached.length })
+        devLog('📦 Seeding IPO list from cache:', { count: cached.length, status })
         setIPOs(cached)
+        // Make sure loading is false if we found cache so we don't blink a spinner
+        setLoading(false)
+      }
+    } else {
+      // If we don't have cache, ensure loading is true
+      if (useIPOStore.getState().ipos.length === 0) {
+        setLoading(true)
       }
     }
-  // Run once on mount — intentionally no deps
+    setInitialized(true);
+  // Run once on mount
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -114,6 +133,7 @@ export const useIPOList = (status: IPOStatus | 'all' = 'all', includeGMP = true)
     clearError()
     
     try {
+      devLog(`🌐 Fetching fresh IPO list for status: ${status} in background`)
       let data: DisplayIPO[]
 
       // Startup priority queue for Home first paint.
@@ -130,15 +150,17 @@ export const useIPOList = (status: IPOStatus | 'all' = 'all', includeGMP = true)
             const shouldOverwriteExisting = queueItem.key !== 'ALL'
             merged = mergeUniqueIPOs(merged, chunk, shouldOverwriteExisting)
 
-            // Progressive updates: ACTIVE appears first, then others stream in.
-            setIPOs(merged)
+            if (isMounted.current) {
+              // Progressive updates: ACTIVE appears first, then others stream in.
+              setIPOs(merged)
+            }
           } catch (queueError) {
             devError(`❌ Failed IPO queue stage ${queueItem.key}:`, queueError)
 
             const fallbackChunk = cacheReadStale<DisplayIPO[]>(queueItem.cacheKey)
             if (fallbackChunk && fallbackChunk.length > 0) {
               merged = mergeUniqueIPOs(merged, fallbackChunk)
-              setIPOs(merged)
+              if (isMounted.current) setIPOs(merged)
             }
           }
         }
@@ -161,17 +183,29 @@ export const useIPOList = (status: IPOStatus | 'all' = 'all', includeGMP = true)
         data = await ipoRepository.getFeed()
       }
 
-      setIPOs(data)
-      // Persist fresh data for the next session / component re-mount
-      cacheWrite(ipoListCacheKey(status, includeGMP), data)
+      if (isMounted.current) {
+        if (status !== 'all') {
+           setIPOs(data)
+        }
+        // Persist fresh data for the next session / component re-mount
+        cacheWrite(ipoListCacheKey(status, includeGMP), data)
+      }
     } catch (err) {
-      devError('❌ Failed to fetch IPOs:', err)
-      setError(err instanceof Error ? err.message : 'Failed to fetch IPOs')
-      
+      if (isMounted.current) {
+        devError('❌ Failed to fetch IPOs:', err)
+        // If we have cached data showing, don't throw a generic error screen
+        if (useIPOStore.getState().ipos.length === 0) {
+           setError(err instanceof Error ? err.message : 'Failed to fetch IPOs')
+        } else {
+           devLog('⚠️ Background IPO feed refresh failed, keeping stale data')
+        }
+      }
     } finally {
       inFlightRef.current = false
-      setLoading(false)
-      setRefreshing(false)
+      if (isMounted.current) {
+        setLoading(false)
+        setRefreshing(false)
+      }
     }
   }, [status, includeGMP, setIPOs, setLoading, setError, clearError])
 
@@ -188,23 +222,82 @@ export const useIPOList = (status: IPOStatus | 'all' = 'all', includeGMP = true)
 // Hook for single IPO details with GMP
 export const useIPODetails = (ipoId: string, includeGMP = true) => {
   const [ipo, setIPO] = useState<DisplayIPO | null>(null)
-  const [loading, setLoading] = useState(true)
+  
+  // We need a ref to track if we've seeded from cache to avoid flicker
+  const seededFromCache = useRef(false)
+  const isMounted = useRef(true)
+
+  // Initialize loading state differently based on cache availability
+  const [loading, setLoading] = useState(() => {
+    if (!ipoId) return false;
+    
+    // Check cache synchronously on initial hook call
+    const cacheKey = `IPO_DETAILS_${ipoId}_${includeGMP ? 'GMP' : 'NOGMP'}`
+    const cachedData = cacheReadStale<DisplayIPO>(cacheKey)
+    
+    if (cachedData) {
+      return false; // We have stale data, don't show initial loading spinner
+    }
+    return true; // No cache, show loading spinner
+  })
+  
   const [error, setError] = useState<string | null>(null)
+
+  // Clean up on unmount
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const fetchIPO = useCallback(async () => {
     if (!ipoId) return
 
-    setLoading(true)
+    const cacheKey = `IPO_DETAILS_${ipoId}_${includeGMP ? 'GMP' : 'NOGMP'}`
+    
+    // Seed from cache immediately if we haven't already
+    if (!seededFromCache.current) {
+      seededFromCache.current = true
+      const cached = cacheReadStale<DisplayIPO>(cacheKey)
+      if (cached) {
+        devLog(`📦 Seeding IPO details from cache for ${ipoId}`)
+        setIPO(cached)
+        // We purposefully DO NOT set loading to true here if we have cache
+        // to implement the "Stale-While-Revalidate" pattern
+      } else {
+        // Only set loading if we don't have cached data
+        setLoading(true)
+      }
+    }
+    
     setError(null)
     
     try {
+      devLog(`🌐 Fetching fresh IPO details for ${ipoId} in background`)
       const data = await ipoRepository.getById(ipoId, includeGMP)
       
-      setIPO(data)
+      if (isMounted.current) {
+        setIPO(data)
+        // Persist fresh data for the next time this IPO is viewed
+        cacheWrite(cacheKey, data)
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch IPO details')
+      if (isMounted.current) {
+        // Only show error if we don't have ANY data to show
+        setIPO((currentIpo) => {
+          if (!currentIpo) {
+            setError(err instanceof Error ? err.message : 'Failed to fetch IPO details')
+          } else {
+            devLog(`⚠️ Background refresh failed for ${ipoId}, keeping stale data`, err)
+          }
+          return currentIpo;
+        });
+      }
     } finally {
-      setLoading(false)
+      if (isMounted.current) {
+        setLoading(false)
+      }
     }
   }, [ipoId, includeGMP])
 
@@ -306,22 +399,4 @@ export const useMarketIndices = (autoRefresh = true) => {
   }, [autoRefresh, fetchIndices])
 
   return { indices, loading, error, refresh: fetchIndices }
-}
-
-// Hook for cache warmup (call on app startup)
-export const useCacheWarmup = () => {
-  const [warming, setWarming] = useState(false)
-
-  const warmupCache = useCallback(async () => {
-    setWarming(true)
-    try {
-      await ipoService.warmupCache()
-    } catch (err) {
-      devError('Cache warmup failed:', err)
-    } finally {
-      setWarming(false)
-    }
-  }, [])
-
-  return { warming, warmupCache }
 }

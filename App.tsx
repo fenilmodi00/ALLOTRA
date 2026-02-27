@@ -21,15 +21,15 @@ export default function App() {
     Inter_700Bold,
   })
 
-  // Initialize app (cache warmup, etc.)
-  const { initialized, warming, error } = useAppInitialization()
+  // Initialize app
+  const { initialized, error } = useAppInitialization()
 
   if (!fontsLoaded) {
     return null
   }
 
   // Show loading screen while initializing
-  if (!initialized && warming) {
+  if (!initialized) {
     return (
       <SafeAreaProvider>
         <GluestackV3Provider mode="light">

@@ -192,11 +192,6 @@ export const ipoService = {
   // Get performance metrics (for debugging/monitoring)
   async getPerformanceMetrics() {
     return apiClient.get('/v1/performance/metrics')
-  },
-
-  // Warm up cache (call on app startup)
-  async warmupCache() {
-    return apiClient.post('/v1/performance/cache/warmup', {})
   }
 }
 
