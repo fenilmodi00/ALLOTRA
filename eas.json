@@ -1,7 +1,8 @@
 {
   "cli": {
     "version": ">= 16.0.1",
-    "appVersionSource": "remote"
+    "appVersionSource": "remote",
+    "projectId": "2acdb93e-ddf0-4b41-ae0f-1e1f5760c424"
   },
   "build": {
     "development": {

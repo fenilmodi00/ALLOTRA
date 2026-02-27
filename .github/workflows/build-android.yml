@@ -36,7 +36,8 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Initialize EAS project
+        run: eas init --id 2acdb93e-ddf0-4b41-ae0f-1e1f5760c424 --non-interactive
+
       - name: Build on EAS
         run: eas build -p android --profile preview --non-interactive --no-wait
-        env:
-          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}

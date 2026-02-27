@@ -35,6 +35,11 @@
     "plugins": [
       "expo-font"
     ],
-    "owner": "fenilmodi00"
+    "owner": "fenilmodi00",
+    "extra": {
+      "eas": {
+        "projectId": "2acdb93e-ddf0-4b41-ae0f-1e1f5760c424"
+      }
+    }
   }
 }
