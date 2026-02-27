@@ -34,13 +34,13 @@ jobs:
         run: npm install -g eas-cli
 
       - name: EAS Login
-        run: eas login --non-interactive
+        run: eas login
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
       - name: EAS Build for Android (Preview APK)
         id: build
-        run: eas build -p android --profile preview --non-interactive
+        run: eas build -p android --profile preview
         env:
           EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
 
